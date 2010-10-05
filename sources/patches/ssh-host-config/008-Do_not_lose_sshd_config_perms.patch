@@ -1,0 +1,17 @@
+--- ssh-host-config.orig	2010-03-15 14:11:19.929441367 +0100
++++ ssh-host-config	2010-03-15 14:12:50.857439519 +0100
+@@ -172,12 +172,10 @@
+   then
+     csih_inform "Updating ${SYSCONFDIR}/sshd_config file"
+     sshdconfig_tmp=${SYSCONFDIR}/sshd_config.$$
+-    sed -e "s/^#UsePrivilegeSeparation yes/UsePrivilegeSeparation ${privsep_used}/
++    sed -i -e "s/^#UsePrivilegeSeparation yes/UsePrivilegeSeparation ${privsep_used}/
+   	  s/^#Port 22/Port ${port_number}/
+   	  s/^#StrictModes yes/StrictModes no/" \
+-	< ${SYSCONFDIR}/sshd_config \
+-	> "${sshdconfig_tmp}"
+-    mv "${sshdconfig_tmp}" ${SYSCONFDIR}/sshd_config
++          ${SYSCONFDIR}/sshd_config
+   elif [ "${privsep_configured}" != "yes" ]
+   then
+     echo >> ${SYSCONFDIR}/sshd_config

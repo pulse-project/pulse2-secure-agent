@@ -1,0 +1,10 @@
+--- cygwin-service-installation-helper.sh	2010-04-20 15:56:17.376588567 +0200
++++ cygwin-service-installation-helper.sh.new	2010-04-26 13:35:08.146014101 +0200
+@@ -1031,6 +1031,7 @@
+   local b=$(basename -- "$d")
+   local D=$(cd "$d/../../lib/$b" >/dev/null 2>&1 && pwd)
+   local fullpath=
++  D=/lib/csih
+   if [ -z "$D" ]
+   then
+     # try /usr/lib/csih explicitly

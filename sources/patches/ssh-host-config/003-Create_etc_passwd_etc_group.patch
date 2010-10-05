@@ -1,0 +1,13 @@
+--- ssh-host-config.orig	2009-03-02 14:53:45.706878385 +0100
++++ ssh-host-config	2009-03-02 14:56:37.467966185 +0100
+@@ -466,6 +466,10 @@
+   csih_error "There are still ssh processes running. Please shut them down first."
+ fi
+ 
++# Create /etc/passwd and /etc/group
++chmod 755 /etc/postinstall/passwd-grp.sh.done
++/etc/postinstall/passwd-grp.sh.done
++
+ # Check for ${SYSCONFDIR} directory
+ csih_make_dir "${SYSCONFDIR}" "Cannot create global configuration files."
+ chmod 775 "${SYSCONFDIR}"

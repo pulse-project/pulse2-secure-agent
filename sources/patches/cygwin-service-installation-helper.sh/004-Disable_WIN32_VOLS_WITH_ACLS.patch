@@ -1,0 +1,26 @@
+--- cygwin-service-installation-helper.sh	2010-04-27 10:25:50.078014732 +0200
++++ cygwin-service-installation-helper.sh.new	2010-04-27 10:37:58.622014186 +0200
+@@ -1406,15 +1406,15 @@
+   # convert to w32 format
+   w32path=$(cygpath -m "$1")
+ 
+-  if _csih_path_in_volumelist "$w32path" "$csih_WIN32_VOLS_WITH_ACLS"
+-  then
+-    return 0
+-  fi
++  #if _csih_path_in_volumelist "$w32path" "$csih_WIN32_VOLS_WITH_ACLS"
++  #then
++  #  return 0
++  #fi
+ 
+-  if _csih_path_in_volumelist "$w32path" "$csih_WIN32_VOLS_WITHOUT_ACLS"
+-  then
+-    return 1
+-  fi
++  #if _csih_path_in_volumelist "$w32path" "$csih_WIN32_VOLS_WITHOUT_ACLS"
++  #then
++  #  return 1
++  #fi
+ 
+   output=$(csih_invoke_helper getVolInfo "$1" | grep "FILE_PERSISTENT_ACLS" 2>/dev/null)
+   rstatus=$?

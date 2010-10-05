@@ -1,0 +1,12 @@
+--- ssh-host-config.orig	2009-03-02 15:00:52.717701482 +0100
++++ ssh-host-config	2009-03-02 15:02:10.237701692 +0100
+@@ -470,6 +470,9 @@
+ chmod 755 /etc/postinstall/passwd-grp.sh.done
+ /etc/postinstall/passwd-grp.sh.done
+ 
++# Fix directories permissions
++chmod 755 /var
++
+ # Check for ${SYSCONFDIR} directory
+ csih_make_dir "${SYSCONFDIR}" "Cannot create global configuration files."
+ chmod 775 "${SYSCONFDIR}"

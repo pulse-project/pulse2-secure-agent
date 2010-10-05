@@ -1,0 +1,20 @@
+--- winsup/cygwin/mkvers.sh.orig	2008-02-08 17:58:18.467250000 +0100
++++ winsup/cygwin/mkvers.sh	2008-02-18 10:29:45.118125000 +0100
+@@ -141,7 +141,7 @@
+ #ifdef DEBUGGING
+   "%%% Cygwin shared id: " CYGWIN_VERSION_DLL_IDENTIFIER "S" shared_data_version "-$builddate\n"
+ #else
+-  "%%% Cygwin shared id: " CYGWIN_VERSION_DLL_IDENTIFIER "S" shared_data_version "\n"
++  "%%% Cygwin shared id: " CYGWIN_VERSION_DLL_IDENTIFIER "S" shared_data_version "-mdvopenssh\n"
+ #endif
+   "END_CYGWIN_VERSION_INFO\n\0";
+ cygwin_version_info cygwin_version =
+@@ -154,7 +154,7 @@
+ #ifdef DEBUGGING
+   CYGWIN_VERSION_DLL_IDENTIFIER "S" shared_data_version "-$builddate"
+ #else
+-  CYGWIN_VERSION_DLL_IDENTIFIER "S" shared_data_version
++  CYGWIN_VERSION_DLL_IDENTIFIER "S" shared_data_version "-mdvopenssh"
+ #endif
+ };
+ EOF

@@ -1,0 +1,17 @@
+--- ssh-host-config	2010-04-13 16:45:20.512602234 +0200
++++ ssh-host-config.new	2010-04-13 16:45:14.704601947 +0200
+@@ -575,9 +575,11 @@
+ 
+ # handle sshd_config (and privsep)
+ csih_install_config "${SYSCONFDIR}/sshd_config"   "${SYSCONFDIR}/defaults"
+-if ! cmp "${SYSCONFDIR}/sshd_config" "${SYSCONFDIR}/defaults/${SYSCONFDIR}/sshd_config" >/dev/null 2>&1
+-then
+-  grep -q UsePrivilegeSeparation ${SYSCONFDIR}/sshd_config && privsep_configured=yes
++if [ -f "${SYSCONFDIR}/sshd_config" ]; then
++  if ! cmp "${SYSCONFDIR}/sshd_config" "${SYSCONFDIR}/defaults/${SYSCONFDIR}/sshd_config" >/dev/null 2>&1
++  then
++    grep -q UsePrivilegeSeparation ${SYSCONFDIR}/sshd_config && privsep_configured=yes
++  fi
+ fi
+ sshd_privsep
+ 

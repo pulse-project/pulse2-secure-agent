@@ -1,0 +1,11 @@
+--- cygwin-service-installation-helper.sh	2010-03-23 14:23:21.687340881 +0100
++++ cygwin-service-installation-helper.sh.new	2010-03-23 15:30:24.591339616 +0100
+@@ -224,7 +224,7 @@
+ fi
+ readonly _csih_sys _csih_nt _csih_2k _csih_xp _csih_nt2003 _csih_vista
+ 
+-_csih_cygver=$(b=`uname -r` && echo "${b%%(*}")
++_csih_cygver="1.7.0"
+ _csih_cygver_is_oneseven=`echo ${_csih_cygver} | awk -F. '{print ( $1 > 1 || ($1 == 1 && $2 >= 7) ) ? 1 : 0;}'`
+ readonly _csih_cygver _csih_cygver_is_oneseven
+ 
