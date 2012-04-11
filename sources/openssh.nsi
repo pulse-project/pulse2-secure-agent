@@ -1,6 +1,6 @@
 ; Basic variables
 !define PRODUCT_NAME "Mandriva OpenSSH Agent"
-!define PRODUCT_VERSION "2.0.2"
+!define PRODUCT_VERSION "2.0.2.1"
 !define PRODUCT_PUBLISHER "Mandriva S.A."
 !define PRODUCT_WEB_SITE "http://www.mandriva.com"
 !define PRODUCT_DIR_REGKEY "Software\Mandriva\OpenSSH"
