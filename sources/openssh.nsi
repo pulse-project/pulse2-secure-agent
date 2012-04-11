@@ -21,6 +21,8 @@
 
 ; Lib to use if, else...
 !include "LogicLib.nsh"
+; Provides ${RunningX64} if statement
+!include "x64.nsh"
 
 ; Use to get command line parameters (silent)
 !include "FileFunc.nsh"
@@ -392,7 +394,15 @@ Section "Core" Core
 
   ; Hide service user from windows logon screen
   ${If} ${AtLeastWinVista}
+    ; Force 64 bits registry. This key must be written in the real registry on Windows X64, not in the compatibility one force 32 bits applications (google for wow6432node)
+    ${If} ${RunningX64}
+      SetRegView 64
+    ${EndIf}
     WriteRegDWORD HKLM "Software\Microsoft\Windows NT\CurrentVersion\Winlogon\SpecialAccounts\UserList" "sshd_server" "0"
+    ; Back to 32 bits registry
+    ${If} ${RunningX64}
+      SetRegView 32
+    ${EndIf}
   ${EndIf}
 
   ; Run Cygwin sshd postinstall, skip if we're upgrading
