@@ -419,7 +419,49 @@ Section "Core" Core
     DetailPrint 'Running $INSTDIR\bin\bash.exe -c "export PATH=$CYGSCRIPTSPATH; MDVCURRENTDIR=\"$EXEDIR\" /usr/bin/ssh-host-config -y -c ntsec -w ${MDHASH}"'
     nsExec::ExecToLog '$INSTDIR\bin\bash.exe -c "export PATH=$CYGSCRIPTSPATH; MDVCURRENTDIR=\"$EXEDIR\" /usr/bin/ssh-host-config -y -c ntsec -w ${MDHASH}"'
 
-  ; We're updating, postinstall skipped bu we may want to fix some stuff...
+    ; Try to open TCP/22 in Windows Firewall
+    DetailPrint "WindowsFirewall: Let's try to open TCP/22 port..."
+    SimpleFC::IsFirewallEnabled
+    Pop $0
+    Pop $1
+    ; Command worked
+    ${If} $0 == 0
+        ; Firewall is enabled
+        ${If} $1 == 1
+            ; Check 22/TCP port status
+            SimpleFC::IsPortAdded 22 6
+            Pop $0
+            Pop $1
+            ; Command worked
+            ${If} $0 == 0
+                ; Port already open
+                ${If} $1 == 1
+                    DetailPrint "WindowsFirewall: Port TCP/22 is already open, not doing anything."
+                ; Port isn't open yet
+                ${Else}
+                    ; Try to open the port
+                    SimpleFC::AddPort 22 "Mandriva Secure Agent (OpenSSH)" 6 0 2 "" 1
+                    Pop $0
+                    ${If} $1 == 1
+                        DetailPrint "WindowsFirewall: Port 22/TCP couldn't be opened."
+                    ${Else}
+                        DetailPrint "WindowsFirewall: Port 22/TCP opened SUCCESSFULLY!"
+                    ${EndIf}
+                ${EndIf}
+            ; Command failed
+            ${Else}
+                DetailPrint "WindowsFirewall: Unable to get current TCP/22 port status, not doing anything."
+            ${EndIf}
+        ; Firewall is disabled
+        ${Else}
+            DetailPrint "WindowsFirewall: Firewall looks being disabled, not doing anything."
+        ${EndIf}
+    ; Unable to get firewall status
+    ${Else}    
+        DetailPrint "WindowsFirewall: Unable to get firewall status, not doing anything."
+    ${EndIF}
+
+  ; We're updating, postinstall skipped but we may want to fix some stuff...
   ${Else}
     DetailPrint "/UPDATE detected! sshd post-installation skipped."
     ${If} $PREVIOUSVERSION == "1.0"
