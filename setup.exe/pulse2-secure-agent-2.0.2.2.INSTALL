@@ -1,0 +1,221 @@
+===================================================
+ Mandriva Pulse 2 Secure Agent 2.0.2.2 for MS win32
+===================================================
+
+0. About this document
+   -------------------
+
+  Subject : overview, installation and update of Mandriva Pulse 2
+            (http://pulse2.mandriva.org) Secure Agent for MS win32
+            platforms, version 2.0.2.2
+  Date    : 2012-08-03
+  Authors : Nicolas Rueff <nrueff@mandriva.com>
+            Adam Cécile <acecile@mandriva.com>
+
+
+1. Description
+   ------------
+
+This service comes from Cygwin's OpenSSH version 5.5p1-1. It can deploy
+on a Microsoft Windows 32bits plateform :
+   * an OpenSSH service,
+   * A minimum GNU/Linux-like environment (command line and main tools).
+
+
+2. Prerequisites
+   -------------
+
+At the time of drafting this document, supported platforms are as
+follows :
+  - MS Windows 2000 Professional SP4,
+  - MS Windows XP Professional SP2 and SP3,
+  - MS Windows 2003 Server SP2,
+  - MS Windows Vista Ultimate SP2,
+  - MS Windows 2008 Server SP1,
+  - MS Windows 7 Ultimate.
+
+This version is the replacement of older versions of the OpenSSH Agent :
+  - In its "Linbox" flavour : openssh-4.6p1-1linbox5 and lower
+  - In its "Mandriva" flavour : pulse2-secure-agent-2.0.0.exe and
+  lower.
+
+
+3. News of this agent
+   ------------------
+
+3.1. New series 1.0.x
+     ----------------
+
+The 1.0.x series is a complete evolution of the former Linbox agent :
+  - Some graphical improvement in the installer,
+  - New logical partitioning of the various components of the SSH
+    service,
+  - Cygwin1.dll now uses its own memory space and its own registry key;
+    thus the agent does not come into conflict with any applications
+    installed on the client and based on Cygwin,
+  - Included some additional tools (wget, rsync etc. ...).
+
+
+3.1. New series 1.1.x
+     ----------------
+
+The main evolution of the 1.1.x series is the ability to perform
+smarter updates, thanks to a complete rewrite of the installer.
+
+
+3.2. New series 1.2.x
+     ----------------
+
+Most of the service creation code has been reworked to bring Windows
+Vista (and its derivatives like 2008 Server) compatibility.
+This release also comes with all Cygwin binaries updated.
+
+
+3.3. New 1.2.3
+     ---------
+
+A new tool named pulse2-ether-list.exe is used to get network
+interfaces parameters on Windows.
+
+A new flag has been introduced : "/FORCE" (see below).
+
+
+3.4. New series 2.x
+     --------------
+
+This new release is based upon Cygwin's 1.7 major release.
+It brings full support for Microsoft Windows Vista, 2008 Server and Seven.
+It also comes with all Cygwin binaries updated.
+
+If upgrading from 1.x to 2.x, please REBOOT AS SOON AS POSSIBLE.
+
+4. Installation Procedure
+   ----------------------
+
+4.1. Remove the previous agent (if applicable)
+     -----------------------------------------
+
+If a "Linbox" SSH Agent version is installed on the target client
+("Mandriva" Secure Agent are NOT concerned), it is imperative to delete
+it beforehand. To do this :
+  - Make sure you stop the OpenSSH service (Control Panel,
+    Server Administration, Services, "CygWin sshd"),
+  - Remove the agent (Control Panel, Add / Remove programs, "OpenSSH for
+    Windows (remove only)"),
+  - Check that the directory content with the agent (default :
+    C:\Program Files\OpenSSH) has been deleted.
+
+
+4.2. Installing the new agent
+     ------------------------
+
+4.2.1. Installation process description
+       --------------------------------
+
+The installer performs three operations on the target computer :
+  1. stop and delete any Cygwin OpenSSH service detected,
+  2. copy the Cygwin tree,
+  3. configure the client :
+    a. generate an OpenSSH key,
+    b. set-up and start the OpenSSH service.
+
+If the installer is run using the "/UPDATE" flag, steps 1 and 3 are not
+performed.
+
+If the installer found that an agent is already installed at the same
+version and the same place, the install is aborted unless the "/FORCE"
+flag is specified; this is a foolproof mechanism to prevent looping
+installations.
+
+It is recommended to use the "/UPDATE" flag for updates by deployment.
+
+
+4.2.2. Agent Installation
+       ------------------
+
+4.2.2.2. Interactive mode
+         ----------------
+
+To install the new agent, the procedure is exactly the same as for
+previous versions, namely :
+  - Copy the installer (pulse2-secure-agent-2.0.2.2.exe) on the
+    workstation,
+  - Copy the public key "id_dsa.pub" or "id_rsa.pub" in the same
+    directory as the installer (optional if a "Linbox" agent has
+    already been installed on the client),
+  - Click on the agent,
+  - Follow the instructions keeping the default options.
+
+
+4.2.2.3. Automated mode
+         --------------
+The procedure is as follows :
+  - Copy the installer (pulse2-secure-agent-2.0.2.2.exe) on the
+    workstation,
+  - Copy the public key "id_dsa.pub" or "id_rsa.pub" in the same
+    directory as the installer (optional if a "Linbox" agent has
+    already been installed on the client),
+  - Run the executable from the command line using the argument "/S".
+
+For example, the following .bat file can be used to deploy the agent in
+silent mode :
+
+-8<-------8<-------8<-------8<-------8<-------8<-------8<-------8<------
+start /wait pulse2-secure-agent-2.0.2.2.exe /S
+-8<-------8<-------8<-------8<-------8<-------8<-------8<-------8<------
+
+
+4.2.2.4. About /D command line flag
+         --------------------------
+
+Installation directory can be specified with /D.
+Please always uses double quotes around the path to avoid problems.
+For example :
+pulse2-secure-agent-2.0.2.2.exe /S /D="C:\Pulse2\Secure Agent"
+
+
+4.2.3. Agent Update
+       ------------
+
+4.2.3.1. Interactive mode
+         ----------------
+
+Follow the installation procedure by running the installer binary with
+the following parameter : "/UPDATE".
+After the update it is advisable to reboot the workstation as soon as
+possible.
+
+
+4.2.3.2. Automated mode
+         --------------
+
+Follow the installation procedure by running the installer binary with
+the following parameters : "/S /UPDATE".
+After the update it is advisable to reboot the workstation as soon as
+possible.
+
+
+5. Installation check-up
+   ---------------------
+
+To ensure the a working OpenSSH service is installed, simply :
+  - Check that the "Mandriva OpenSSH Agent" is running,
+  - Run directly
+    "C:\Program Files\Mandriva\OpenSSH\bin\bash.exe"
+    to obtain a bash command line :
+    "bash-3.2 $"
+  - Initialize the "PATH" environment variable:
+-8<-------8<-------8<-------8<-------8<-------8<-------8<-------8<------
+bash-3.2 $ export PATH="/bin"
+-8<-------8<-------8<-------8<-------8<-------8<-------8<-------8<------
+  - Using the command line, check that the "mount" command returns at
+    least the following lines :
+bash-3.2 $ mount
+C:/Program Files/Mandriva/OpenSSH/bin on /usr/bin type ntfs (binary,auto)
+C:/Program Files/Mandriva/OpenSSH/lib on /usr/lib type ntfs (binary,auto)
+C:/Program Files/Mandriva/OpenSSH on / type ntfs (binary,auto)
+C:/Documents and Settings on /home type ntfs (binary,posix=0)
+C: on /cygdrive/c type ntfs (binary,posix=0,user,noumount,auto)
+-8<-------8<-------8<-------8<-------8<-------8<-------8<-------8<------
+  - Finally, check that from the Pulse2 web interface the green light is
+  shown the position is available (green LED).
