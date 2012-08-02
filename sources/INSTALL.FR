@@ -1,5 +1,5 @@
 ====================================================
- Mandriva Pulse 2 Secure Agent 2.0.2.1 pour MS win32
+ Mandriva Pulse 2 Secure Agent 2.0.2.2 pour MS win32
 ====================================================
 
 0. À propos de ce document
@@ -7,8 +7,8 @@
 
   Objet :  présentation, installation et mise à jour du Mandriva Pulse 2
            (http://pulse2.mandriva.org) Secure Agent pour plate-formes MS
-           win32 en version 2.0.2.1
-  Date    : 2012-04-11
+           win32 en version 2.0.2.2
+  Date    : 2012-08-03
   Auteurs : Nicolas Rueff <nrueff@mandriva.com>
             Adam Cécile <acecile@mandriva.com>
 
@@ -146,7 +146,7 @@ par diffusion.
 
 Pour installer le nouvel agent, la procédure à suivre est exactement la
 même qu'avec les versions précédentes de l'agent SSH, à savoir :
- - copie de l'installeur (pulse2-secure-agent-2.0.2.1.exe) sur le poste
+ - copie de l'installeur (pulse2-secure-agent-2.0.2.2.exe) sur le poste
    client,
  - copie de la clé publique "id_dsa.pub" ou "id_rsa.pub" dans le même
    répertoire que l'installeur (facultatif si un agent "Linbox" a déjà
@@ -159,7 +159,7 @@ même qu'avec les versions précédentes de l'agent SSH, à savoir :
 4.2.2.3. En mode automatique
          -------------------
 La procédure est la suivante :
- - copie de l'installeur (pulse2-secure-agent-2.0.2.1.exe) sur le poste
+ - copie de l'installeur (pulse2-secure-agent-2.0.2.2.exe) sur le poste
    client,
  - copie de la clé publique "id_dsa.pub" ou "id_rsa.pub" dans le même
    répertoire que l'installeur (facultatif si un agent "Linbox" a déjà
@@ -170,7 +170,7 @@ Par exemple, le fichier .bat suivant permet de réaliser l'installation
 de l'agent en mode silencieux :
 
 --8<------8<------8<------8<------8<------8<------8<------8<------8<----
-start /wait pulse2-secure-agent-2.0.2.1.exe /S
+start /wait pulse2-secure-agent-2.0.2.2.exe /S
 --8<------8<------8<------8<------8<------8<------8<------8<------8<----
 
 
@@ -200,7 +200,7 @@ Le répertoire d'installation peut être défini avec /D.
 Il faut toujours ajouter des guillemets autour du chemin pour éviter
 d'éventuels problèmes.
 Par exemple :
-pulse2-secure-agent-2.0.2.1.exe /S /D="C:\Pulse2\Secure Agent"
+pulse2-secure-agent-2.0.2.2.exe /S /D="C:\Pulse2\Secure Agent"
 
 
 5. Validation de fonctionnement
