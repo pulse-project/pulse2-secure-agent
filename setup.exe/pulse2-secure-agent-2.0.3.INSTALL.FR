@@ -1,0 +1,231 @@
+====================================================
+ Mandriva Pulse 2 Secure Agent 2.0.3 pour MS win32
+====================================================
+
+0. À propos de ce document
+   -----------------------
+
+  Objet :  présentation, installation et mise à jour du Mandriva Pulse 2
+           (http://pulse2.mandriva.org) Secure Agent pour plate-formes MS
+           win32 en version 2.0.3
+  Date    : 2013-06-04
+  Auteurs : Nicolas Rueff <nrueff@mandriva.com>
+            Adam Cécile <acecile@mandriva.com>
+
+
+1. Description
+   -----------
+
+Ce service OpenSSH est issu de la version 5.5p1-1 de CygWin. Il permet
+de déployer sur une plate-forme Microsoft Windows 32 bits :
+  * un service OpenSSH,
+  * un environnement de travail minimal GNU/Linux-like (ligne de
+  commande et outils principaux).
+
+
+2. Pré-requis
+   ----------
+
+À la date de rédaction de ce document les plate-formes supportées sont
+les suivantes :
+ - MS Windows 2000 Professionnel SP4,
+ - MS Windows XP Professionnel SP2 et SP3,
+ - MS Windows 2003 Serveur SP2,
+ - MS Windows Vista Intégral SP2,
+ - MS Windows 2008 Serveur SP1,
+ - MS Windows 7 Intégral.
+
+Cette version vient en remplacement complet des anciennes versions de
+l'agent OpenSSH :
+ - dans sa version "Linbox" : OpenSSH-4.6p1-1linbox5 et inférieures,
+ - dans sa version "Mandriva" : pulse2-secure-agent-2.0.0.exe et
+ inférieures.
+
+
+3. Nouveautés de cet agent
+   -----------------------
+
+3.1. Nouveauté des séries 1.0.x
+     --------------------------
+
+Les séries 1.0.x sont une évolution complète de l'ancien agent "Linbox" :
+ - changement de charte graphique de l'installeur,
+ - nouveau partitionnement logique des différents composants du service
+   SSH,
+ - cygwin1.dll utilise dorénavant son propre espace mémoire et sa propre
+   clé de base de registre. Ainsi l'agent n'entre plus en conflit avec
+   d'éventuelles applications installées sur le poste client et basées
+   sur Cygwin,
+ - quelques outils supplémentaires intégrés (wget, rsync etc ...).
+
+
+3.1. Nouveauté des séries 1.1.x
+     --------------------------
+
+Le principal apport des séries 1.1.x est la possibilité de gérer
+intelligemment les mises à jour des anciens agent via une refonte totale
+du système d'installation.
+
+
+3.2. Nouveauté des séries 1.2.x
+     --------------------------
+
+L'ensemble du code qui crée le service Windows a entièrement été réécrit
+afin d'ajouter le support de Windows Vista et de ses dérivés (tels que
+Windows 2008 server).
+Tous les binaires venant de Cygwin ont aussi été mis à jour.
+
+
+3.3. Nouveauté 1.2.3
+     ---------------
+
+Un nouvel outil appelé pulse2-ether-list.exe est utilisé pour lister
+les paramètres des interfaces réseaux.
+
+Une nouvelle option a été introduite : "/FORCE" (voir plus bas).
+
+
+3.4. Nouveauté des séries 2.x
+     ------------------------
+
+Cette nouvelle branche est basée sur la nouvelle version 1.7 de Cygwin.
+Elle apporte un support complet des systèmes Microsoft Windows Vista,
+2008 Serveur, et Seven.
+Tous les binaires venant de Cygwin ont aussi été mis à jour.
+
+Lors d'un mise à jour 1.x vers 2.x, merci de REDÉMARRER DÈS QUE POSSIBLE.
+
+
+4. Procédure d'installation
+   ------------------------
+
+4.1. Suppression de l'ancien agent (si applicable)
+     ---------------------------------------------
+
+Si le poste cible est équipé d'un ancien agent ssh "Linbox" (les agents
+ssh "Mandriva Secure Agent" ne sont PAS concernés), il faut
+impérativement le supprimer au préalable. Pour cela :
+ - Assurez vous de l'arrêt du service OpenSSH (panneau de configuration,
+   Outils d'administration, Services, "CYGWIN sshd"),
+ - Supprimez l'agent (panneau de configuration, Ajout/suppression de
+   programmes, "OpenSSH for Windows (remove only)"),
+ - Vérifiez que le répertoire ayant contenu l'agent (par défaut :
+   C:\Program Files\OpenSSH) a été intégralement supprimé.
+
+
+4.2. Installation du nouvel agent
+     ----------------------------
+
+4.2.1. Description de la procédure d'installation
+       ------------------------------------------
+
+L'installeur réalise trois opérations sur le poste cible :
+ 1. arrêt et suppression de tout service Cygwin OpenSSH détecté,
+ 2. déploiement de l'arborescence Cygwin,
+ 3. configuration du poste :
+   a. génération des clés OpenSSH,
+   b. déclaration et démarrage du service OpenSSH.
+
+Dans les cas où l'installeur est lancé avec le paramètre "/UPDATE" (mode
+"mise à jour"), les étapes 1 et 3 ne sont pas réalisées.
+
+Si l'installeur détecte qu'un agent est déjà installé à la même version
+et au même endroit, l'installation est interrompue sauf si l'option
+"/FORCE" est spécifiée en ligne de commande; il s'agit d'un mécanisme
+destiné à prévenir les installations en boucle.
+
+Il est recommandé d'utiliser le mode "mise à jour" pour les mises à jour
+par diffusion.
+
+
+4.2.2. Réalisation d'une installation
+       ------------------------------
+
+4.2.2.2. En mode interactif
+         ------------------
+
+Pour installer le nouvel agent, la procédure à suivre est exactement la
+même qu'avec les versions précédentes de l'agent SSH, à savoir :
+ - copie de l'installeur (pulse2-secure-agent-2.0.3.exe) sur le poste
+   client,
+ - copie de la clé publique "id_dsa.pub" ou "id_rsa.pub" dans le même
+   répertoire que l'installeur (facultatif si un agent "Linbox" a déjà
+   été installé sur le poste client),
+ - cliquer sur l'agent,
+ - suivre les instructions affichées en conservant les options par
+   défaut.
+
+
+4.2.2.3. En mode automatique
+         -------------------
+La procédure est la suivante :
+ - copie de l'installeur (pulse2-secure-agent-2.0.3.exe) sur le poste
+   client,
+ - copie de la clé publique "id_dsa.pub" ou "id_rsa.pub" dans le même
+   répertoire que l'installeur (facultatif si un agent "Linbox" a déjà
+   été installé sur le poste client),
+ - lancer l'exécutable en ligne de commande avec l'argument "/S".
+
+Par exemple, le fichier .bat suivant permet de réaliser l'installation
+de l'agent en mode silencieux :
+
+--8<------8<------8<------8<------8<------8<------8<------8<------8<----
+start /wait pulse2-secure-agent-2.0.3.exe /S
+--8<------8<------8<------8<------8<------8<------8<------8<------8<----
+
+
+4.2.3. Réalisation d'une mise à jour
+       -----------------------------
+
+4.2.3.1. En mode interactif
+         ------------------
+
+Suivre la procédure d'installation, en lançant l'exécutable en ligne de
+commande avec l'argument "/UPDATE".
+Il est conseillé de redémarrer rapidement le poste après la mise à jour.
+
+
+4.2.3.2. En mode automatique
+         -------------------
+
+Suivre la procédure d'installation, en lançant l'exécutable en ligne de
+commande avec l'argument "/S /UPDATE".
+Il est conseillé de redémarrer rapidement le poste après la mise à jour.
+
+
+4.2.2.4. A propos du paramètre /D
+         ------------------------
+
+Le répertoire d'installation peut être défini avec /D.
+Il faut toujours ajouter des guillemets autour du chemin pour éviter
+d'éventuels problèmes.
+Par exemple :
+pulse2-secure-agent-2.0.3.exe /S /D="C:\Pulse2\Secure Agent"
+
+
+5. Validation de fonctionnement
+   ----------------------------
+
+Pour s'assurer du bon fonctionnement du service cygwin, il suffit de :
+ - Vérifier que le service "Mandriva OpenSSH Agent" est en cours
+   d'exécution,
+ - Exécuter directement
+   "C:\Program Files\Mandriva\OpenSSH\bin\bash.exe"
+   pour obtenir une ligne de commande bash :
+   "bash-3.2$ ",
+ - Initialiser la variable d'environnement "PATH":
+-8<-------8<-------8<-------8<-------8<-------8<-------8<-------8<------
+bash-3.2 $ export PATH="/bin"
+-8<-------8<-------8<-------8<-------8<-------8<-------8<-------8<------
+ - À l'aide de cette ligne de commande, vérifier que la commande "mount"
+   renvoie au moins les lignes suivantes :
+--8<------8<------8<------8<------8<------8<------8<------8<------8<----
+bash-3.2$ mount
+C:/Program Files/Mandriva/OpenSSH/bin on /usr/bin type ntfs (binary,auto)
+C:/Program Files/Mandriva/OpenSSH/lib on /usr/lib type ntfs (binary,auto)
+C:/Program Files/Mandriva/OpenSSH on / type ntfs (binary,auto)
+C:/Documents and Settings on /home type ntfs (binary,posix=0)
+C: on /cygdrive/c type ntfs (binary,posix=0,user,noumount,auto)
+--8<------8<------8<------8<------8<------8<------8<------8<------8<----
+ - Enfin, vérifier qu'à partir de l'interface d'administration de Pulse2
+   le poste est joignable (diode verte).
