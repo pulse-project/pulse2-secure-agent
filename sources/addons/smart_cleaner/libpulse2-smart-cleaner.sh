@@ -87,11 +87,13 @@ splitOnComma() {
 parseArgs() {
     local next_arg_is_directory=0
     local next_args_are_files=0
-    for arg in ${@}; do
+    for arg in "${@}"; do
         if [ ${next_arg_is_directory} -eq 1 ]; then
             PARAM_DIRECTORY=${arg}
             next_arg_is_directory=0
         elif [ ${next_args_are_files} -eq 1 ]; then
+            # Replace all spaces by pattern '°°°°°'
+            arg="`echo ${arg} | sed 's/ /°°°°°/g'`"
             splitOnComma PARAM_FILES ${arg}
             local next_args_are_files=0
         elif `echo ${arg} | grep -qE '^--'`; then
@@ -142,21 +144,23 @@ listFolder() {
     local varname=${1}
     local startpoint=${2}
 
+    # Convert name back to the real one (strip spaces replacement chars)
+    realstartpoint="`echo ${startpoint} | sed 's/°°°°°/ /g'`"
     # process file (and file-like stuff)
     # file
-    [ -f ${startpoint} ] && eval "${varname}=\"\$$varname $startpoint\"" && return
+    [ -f "${realstartpoint}" ] && eval "${varname}=\"\$$varname $startpoint\"" && return
     # symlink
-    [ -h ${startpoint} ] && eval "${varname}=\"\$$varname $startpoint\"" && return
+    [ -h "${realstartpoint}" ] && eval "${varname}=\"\$$varname $startpoint\"" && return
     # fifo
-    [ -p ${startpoint} ] && eval "${varname}=\"\$$varname $startpoint\"" && return
+    [ -p "${realstartpoint}" ] && eval "${varname}=\"\$$varname $startpoint\"" && return
     # socket
-    [ -S ${startpoint} ] && eval "${varname}=\"\$$varname $startpoint\"" && return
+    [ -S "${realstartpoint}" ] && eval "${varname}=\"\$$varname $startpoint\"" && return
 
     # don't process if not folder
-    [ ! -d ${startpoint} ] && return
+    [ ! -d "${realstartpoint}" ] && return
 
     # process sub-elements (folders and files)
-    for file in $(ls ${startpoint}); do
+    for file in $(ls ${startpoint} | sed 's/ /°°°°°/g'); do
         listFolder ${varname} ${startpoint}/${file}
     done
 
@@ -220,10 +224,11 @@ getWinPath() {
     local cygpath=${1}
     local varname=${2}
     local finalpath=`mount | grep " on / type"  | sed "s| on / type.*$||"`
-    
+
     # translate '/' into '\', then removed trailing '\'
-    cygpath=`echo ${cygpath} | sed 's|/|\\\|g' | sed "s|[\\\]\+$||"`
     finalpath="${finalpath}\\${cygpath}"
+    finalpath=`echo "${finalpath}" | sed 's|/|\\\|g' | sed "s|[\\\]\+$||"`
+   
     eval "${varname}=\"${finalpath}\""
 }
 
@@ -240,12 +245,13 @@ smart_cleanup() {
     done
 
     for filename in ${list[@]]}; do
+        filename="`echo ${filename} | sed 's/°°°°°/ /g'`"
         if `echo ${filename} | grep -qE '/$'`; then # this is a folder (ends with /)
             local removeme_later=0
-            `rmdir ${filename} 2>/dev/null` || removeme_later=1
-            [ -e ${filename} ] && removeme_later=1 # sometimes append, unknown reason
+            `rmdir "${filename}" 2>/dev/null` || removeme_later=1
+            [ -e "${filename}" ] && removeme_later=1 # sometimes append, unknown reason
             # from here, filename if windows-formated
-            getWinPath ${filename} filename
+            getWinPath "${filename}" filename
             if [ ${removeme_later} -eq 0 ]; then
 	            info "Removed folder ${filename}"
             else
@@ -261,10 +267,10 @@ smart_cleanup() {
             fi
         else # this is a file
             local removeme_later=0
-            `rm ${filename} 2>/dev/null` || removeme_later=1
-            [ -e ${filename} ] && removeme_later=1 # sometimes append, unknown reason
+            `rm "${filename}" 2>/dev/null` || removeme_later=1
+            [ -e "${filename}" ] && removeme_later=1 # sometimes append, unknown reason
             # from here, filename if windows-formated
-            getWinPath ${filename} filename
+            getWinPath "${filename}" filename
             if [ ${removeme_later} -eq 0 ]; then
                 info "Removed file ${filename}"
             else

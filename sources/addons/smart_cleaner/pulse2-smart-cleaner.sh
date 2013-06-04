@@ -27,7 +27,7 @@
 [ -r /usr/share/pulse2/libpulse2-smart-cleaner.local.sh ] && . /usr/share/pulse2/libpulse2-smart-cleaner.local.sh
 
 # Parse args
-parseArgs $@
+parseArgs "$@"
 
 # Show help if asked
 [ "${PARAM_USAGE}" -eq "1" ] && usage && exit 0
