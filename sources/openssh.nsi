@@ -1,6 +1,6 @@
 ; Basic variables
 !define PRODUCT_NAME "Mandriva OpenSSH Agent"
-!define PRODUCT_VERSION "2.0.2.2"
+!define PRODUCT_VERSION "2.0.3"
 !define PRODUCT_PUBLISHER "Mandriva S.A."
 !define PRODUCT_WEB_SITE "http://www.mandriva.com"
 !define PRODUCT_DIR_REGKEY "Software\Mandriva\OpenSSH"
@@ -337,6 +337,9 @@ Section "Core" Core
   SetOutPath $INSTDIR\usr\share\terminfo\63
   SetOverwrite on
   File data\cygwin\usr\share\terminfo\63\cygwin
+  SetOutPath $INSTDIR\usr\share\terminfo\78
+  SetOverwrite on
+  File data\cygwin\usr\share\terminfo\78\xterm
 
   SetOutPath $INSTDIR\usr\share\csih
   SetOverwrite on

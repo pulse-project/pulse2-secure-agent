@@ -99,5 +99,6 @@ data/cygwin/usr/sbin/ssh-keysign.exe		Cygwin: openssh-5.5p1-1
 data/cygwin/usr/sbin/sshd.exe			Cygwin: openssh-5.5p1-1
 data/cygwin/usr/share/csih/cygwin-service-installation-helper.sh 	Cygwin: csih-0.9.1-1 with patches
 data/cygwin/usr/share/terminfo/63/cygwin 	Cygwin: terminfo-5.7_20091114-14
+data/cygwin/usr/share/terminfo/78/xterm 	Cygwin: terminfo-5.7_20091114-14
 data/cygwin/var/log/wtmp 			Empty file
 data/cygwin/var/run/utmp 			Empty file

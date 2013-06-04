@@ -1,5 +1,5 @@
 ===================================================
- Mandriva Pulse 2 Secure Agent 2.0.2.2 for MS win32
+ Mandriva Pulse 2 Secure Agent 2.0.3 for MS win32
 ===================================================
 
 0. About this document
@@ -7,8 +7,8 @@
 
   Subject : overview, installation and update of Mandriva Pulse 2
             (http://pulse2.mandriva.org) Secure Agent for MS win32
-            platforms, version 2.0.2.2
-  Date    : 2012-08-03
+            platforms, version 2.0.3
+  Date    : 2013-06-04
   Authors : Nicolas Rueff <nrueff@mandriva.com>
             Adam Cécile <acecile@mandriva.com>
 
@@ -138,7 +138,7 @@ It is recommended to use the "/UPDATE" flag for updates by deployment.
 
 To install the new agent, the procedure is exactly the same as for
 previous versions, namely :
-  - Copy the installer (pulse2-secure-agent-2.0.2.2.exe) on the
+  - Copy the installer (pulse2-secure-agent-2.0.3.exe) on the
     workstation,
   - Copy the public key "id_dsa.pub" or "id_rsa.pub" in the same
     directory as the installer (optional if a "Linbox" agent has
@@ -150,7 +150,7 @@ previous versions, namely :
 4.2.2.3. Automated mode
          --------------
 The procedure is as follows :
-  - Copy the installer (pulse2-secure-agent-2.0.2.2.exe) on the
+  - Copy the installer (pulse2-secure-agent-2.0.3.exe) on the
     workstation,
   - Copy the public key "id_dsa.pub" or "id_rsa.pub" in the same
     directory as the installer (optional if a "Linbox" agent has
@@ -161,7 +161,7 @@ For example, the following .bat file can be used to deploy the agent in
 silent mode :
 
 -8<-------8<-------8<-------8<-------8<-------8<-------8<-------8<------
-start /wait pulse2-secure-agent-2.0.2.2.exe /S
+start /wait pulse2-secure-agent-2.0.3.exe /S
 -8<-------8<-------8<-------8<-------8<-------8<-------8<-------8<------
 
 
@@ -171,7 +171,7 @@ start /wait pulse2-secure-agent-2.0.2.2.exe /S
 Installation directory can be specified with /D.
 Please always uses double quotes around the path to avoid problems.
 For example :
-pulse2-secure-agent-2.0.2.2.exe /S /D="C:\Pulse2\Secure Agent"
+pulse2-secure-agent-2.0.3.exe /S /D="C:\Pulse2\Secure Agent"
 
 
 4.2.3. Agent Update
