@@ -52,7 +52,13 @@ returnfullpath() {
   if [ ! -z ${fullpath} ]; then
     echo "${fullpath}"
   else
-    continue
+    # Special case for 7z binaries
+    fullpath=`find /usr/lib/p7zip/ -name "${1}"`
+    if [ ! -z ${fullpath} ]; then
+      echo "${fullpath}"
+    else
+      continue
+    fi
   fi
 }
 
@@ -102,15 +108,15 @@ for binary in `cat binaries-list`; do
 done
 
 # A few more regular needed files
-for FILE in `which gunzip` /etc/defaults/etc/ssh_config /etc/defaults/etc/sshd_config /etc/moduli /usr/share/terminfo/63/cygwin /usr/share/csih/cygwin-service-installation-helper.sh /etc/postinstall/passwd-grp.sh.done /bin/ssh-host-config /lib/csih/getAccountName /lib/csih/getVolInfo /lib/csih/winProductName; do
+for FILE in `which gunzip` `which awk` /etc/defaults/etc/ssh_config /etc/defaults/etc/sshd_config /etc/moduli /usr/share/terminfo/63/cygwin /usr/share/csih/cygwin-service-installation-helper.sh /etc/postinstall/000-cygwin-post-install.sh.done /bin/ssh-host-config /lib/csih/getAccountName /lib/csih/getVolInfo /lib/csih/winProductName /etc/profile /etc/bash.bashrc /usr/bin/7z /usr/bin/7za /usr/bin/7zr /usr/share/misc/magic.mgc; do
   cp -v --parents ${FILE} ${DESTDIR}
   chmod -R 755 ${DESTDIR}/${FILE}
   if [ "${FILE}" == "/etc/moduli" ]; then
     echo -e "${FILE} \t\t\t\tCygwin: `cygcheck -f ${FILE}`" >> README.Rebuild
   elif [ "${FILE}" == "`which gunzip`" ] || [ "${FILE}" == "`which egrep`" ]; then
     echo -e "${FILE} \t\t\tCygwin: `cygcheck -f ${FILE}`" >> README.Rebuild
-  elif [ "${FILE}" == "/etc/postinstall/passwd-grp.sh.done" ]; then 
-    echo -e "${FILE} \tCygwin: `cygcheck -f /etc/postinstall/passwd-grp.sh`" >> README.Rebuild
+  elif [ "${FILE}" == "/etc/postinstall/000-cygwin-post-install.sh.done" ]; then 
+    echo -e "${FILE} \tCygwin: `cygcheck -f /etc/postinstall/000-cygwin-post-install.sh`" >> README.Rebuild
   else
     echo -e "${FILE} \tCygwin: `cygcheck -f ${FILE}`" >> README.Rebuild
   fi
@@ -122,6 +128,11 @@ for FILE in /var/log/wtmp /var/run/utmp /etc/banner.txt; do
   chmod -R 755 ${DESTDIR}/${FILE}
   echo -e "${FILE} \t\t\tEmpty file" >> README.Rebuild
 done
+
+# Vim config
+mkdir ${DESTDIR}/etc/skel/
+echo 'set nocompatible' > ${DESTDIR}/etc/skel/.vimrc
+echo 'syn on' >> ${DESTDIR}/etc/skel/.vimrc
 
 chmod -R 755 ${DESTDIR}
 
