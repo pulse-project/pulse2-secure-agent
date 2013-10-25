@@ -1,6 +1,7 @@
---- winsup/cygwin/mkvers.sh.orig	2008-02-08 17:58:18.467250000 +0100
-+++ winsup/cygwin/mkvers.sh	2008-02-18 10:29:45.118125000 +0100
-@@ -141,7 +141,7 @@
+diff -Nur ../winsup/cygwin/mkvers.sh ../winsup.new/cygwin/mkvers.sh
+--- ../winsup/cygwin/mkvers.sh	2013-01-21 05:38:27.000000000 +0100
++++ ../winsup.new/cygwin/mkvers.sh	2013-10-24 10:47:07.530806400 +0200
+@@ -133,7 +133,7 @@
  #ifdef DEBUGGING
    "%%% Cygwin shared id: " CYGWIN_VERSION_DLL_IDENTIFIER "S" shared_data_version "-$builddate\n"
  #else
@@ -9,7 +10,7 @@
  #endif
    "END_CYGWIN_VERSION_INFO\n\0";
  cygwin_version_info cygwin_version =
-@@ -154,7 +154,7 @@
+@@ -146,7 +146,7 @@
  #ifdef DEBUGGING
    CYGWIN_VERSION_DLL_IDENTIFIER "S" shared_data_version "-$builddate"
  #else

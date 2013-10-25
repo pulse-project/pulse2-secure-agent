@@ -1,7 +1,7 @@
-diff -u winsup/cygwin/include/cygwin/version.h winsup/cygwin/include/cygwin/version.h.new
---- winsup/cygwin/include/cygwin/version.h	2009-12-07 11:38:52.000000000 +0100
-+++ winsup/cygwin/include/cygwin/version.h.new	2010-03-16 14:20:26.268367084 +0100
-@@ -410,7 +410,8 @@
+diff -Nur ../winsup/cygwin/include/cygwin/version.h ../winsup.new/cygwin/include/cygwin/version.h
+--- ../winsup/cygwin/include/cygwin/version.h	2013-08-31 20:05:31.000000000 +0200
++++ ../winsup.new/cygwin/include/cygwin/version.h	2013-10-24 10:38:46.390201600 +0200
+@@ -479,7 +479,8 @@
  
       /* Identifiers used in the Win32 registry. */
  
@@ -11,26 +11,26 @@ diff -u winsup/cygwin/include/cygwin/version.h winsup/cygwin/include/cygwin/vers
  #define CYGWIN_INFO_PROGRAM_OPTIONS_NAME "Program Options"
  #define CYGWIN_INFO_INSTALLATIONS_NAME   "Installations"
  
-diff -u winsup/cygwin/registry.cc winsup/cygwin/registry.cc.new
---- winsup/cygwin/registry.cc	2009-10-27 12:44:20.000000000 +0100
-+++ winsup/cygwin/registry.cc.new	2010-03-16 14:23:04.552180941 +0100
-@@ -53,6 +53,7 @@
-     }
- OK:
-   new (this) reg_key (top, access, "SOFTWARE",
-+		      CYGWIN_INFO_CYGNUS_REGISTRY_NAME,
- 		      CYGWIN_INFO_CYGWIN_REGISTRY_NAME, NULL);
-   if (top != HKEY_LOCAL_MACHINE)
-     RegCloseKey (top);
-diff -u winsup/cygwin/winver.rc winsup/cygwin/winver.rc.new
---- winsup/cygwin/winver.rc	2009-02-20 17:11:16.000000000 +0100
-+++ winsup/cygwin/winver.rc.new	2010-03-16 14:22:03.767772628 +0100
+diff -Nur ../winsup/cygwin/registry.cc ../winsup.new/cygwin/registry.cc
+--- ../winsup/cygwin/registry.cc	2013-04-23 11:44:33.000000000 +0200
++++ ../winsup.new/cygwin/registry.cc	2013-10-24 10:42:34.938838400 +0200
+@@ -74,6 +74,7 @@
+   if (NT_SUCCESS (key_is_invalid))
+     {
+       new (this) reg_key ((HKEY) top, access, L"SOFTWARE",
++			  _WIDE (CYGWIN_INFO_CYGNUS_REGISTRY_NAME),
+ 			  _WIDE (CYGWIN_INFO_CYGWIN_REGISTRY_NAME), NULL);
+       NtClose (top);
+       if (key_is_invalid)
+diff -Nur ../winsup/cygwin/winver.rc ../winsup.new/cygwin/winver.rc
+--- ../winsup/cygwin/winver.rc	2013-06-11 09:46:40.000000000 +0200
++++ ../winsup.new/cygwin/winver.rc	2013-10-24 10:45:21.728670400 +0200
 @@ -6,6 +6,9 @@
  
  #define CYGWIN_DLL_NAME CYGWIN_VERSION_DLL_IDENTIFIER STRINGIFY(.dll)
  
 +#define CYGWIN_REGISTRY_KEY CYGWIN_INFO_CYGNUS_REGISTRY_NAME "\\" \
-+			    CYGWIN_INFO_CYGWIN_REGISTRY_NAME
++			  CYGWIN_INFO_CYGWIN_REGISTRY_NAME
 +
  #define CYGWIN_API_VERSION STRINGIFY(CYGWIN_VERSION_API_MAJOR) "." \
  			  STRINGIFY(CYGWIN_VERSION_API_MINOR)
