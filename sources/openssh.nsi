@@ -1,6 +1,6 @@
 ; Basic variables
 !define PRODUCT_NAME "Mandriva OpenSSH Agent"
-!define PRODUCT_VERSION "2.0.3"
+!define PRODUCT_VERSION "2.1.0"
 !define PRODUCT_PUBLISHER "Mandriva S.A."
 !define PRODUCT_WEB_SITE "http://www.mandriva.com"
 !define PRODUCT_DIR_REGKEY "Software\Mandriva\OpenSSH"
@@ -220,20 +220,43 @@ Section "Core" Core
   SetOverwrite on
 
   ; Use copy-on-reboot for all DLLs. Theses files may be in use when upgrading.
+  !insertmacro ForceCopyOnReboot data\cygwin\bin\cyglsa.dll "$OUTDIR\cyglsa.dll" "$OUTDIR"
+  !insertmacro ForceCopyOnReboot data\cygwin\bin\cyglsa64.dll "$OUTDIR\cyglsa64.dll" "$OUTDIR"
+  !insertmacro ForceCopyOnReboot data\cygwin\bin\cygwind-0.dll "$OUTDIR\cygwind-0.dll" "$OUTDIR"
+  !insertmacro ForceCopyOnReboot data\cygwin\bin\cygtasn1-3.dll "$OUTDIR\cygtasn1-3.dll" "$OUTDIR"
+  !insertmacro ForceCopyOnReboot data\cygwin\bin\cygstdc++-6.dll "$OUTDIR\cygstdc++-6.dll" "$OUTDIR"
+  !insertmacro ForceCopyOnReboot data\cygwin\bin\cygsqlite3-0.dll "$OUTDIR\cygsqlite3-0.dll" "$OUTDIR"
+  !insertmacro ForceCopyOnReboot data\cygwin\bin\cygroken-18.dll "$OUTDIR\cygroken-18.dll" "$OUTDIR"
+  !insertmacro ForceCopyOnReboot data\cygwin\bin\cygpcre-1.dll "$OUTDIR\cygpcre-1.dll" "$OUTDIR"
+  !insertmacro ForceCopyOnReboot data\cygwin\bin\cygp11-kit-0.dll "$OUTDIR\cygp11-kit-0.dll" "$OUTDIR"
+  !insertmacro ForceCopyOnReboot data\cygwin\bin\cygncursesw-10.dll "$OUTDIR\cygncursesw-10.dll" "$OUTDIR"
+  !insertmacro ForceCopyOnReboot data\cygwin\bin\cygmpfr-4.dll "$OUTDIR\cygmpfr-4.dll" "$OUTDIR"
+  !insertmacro ForceCopyOnReboot data\cygwin\bin\cygmagic-1.dll "$OUTDIR\cygmagic-1.dll" "$OUTDIR"
+  !insertmacro ForceCopyOnReboot data\cygwin\bin\cygkrb5-26.dll "$OUTDIR\cygkrb5-26.dll" "$OUTDIR"
+  !insertmacro ForceCopyOnReboot data\cygwin\bin\cygkafs-0.dll "$OUTDIR\cygkafs-0.dll" "$OUTDIR"
+  !insertmacro ForceCopyOnReboot data\cygwin\bin\cygidn-11.dll "$OUTDIR\cygidn-11.dll" "$OUTDIR"
+  !insertmacro ForceCopyOnReboot data\cygwin\bin\cyghx509-5.dll "$OUTDIR\cyghx509-5.dll" "$OUTDIR"
+  !insertmacro ForceCopyOnReboot data\cygwin\bin\cygheimntlm-0.dll "$OUTDIR\cygheimntlm-0.dll" "$OUTDIR"
+  !insertmacro ForceCopyOnReboot data\cygwin\bin\cygheimbase-1.dll "$OUTDIR\cygheimbase-1.dll" "$OUTDIR"
+  !insertmacro ForceCopyOnReboot data\cygwin\bin\cyggssapi-3.dll "$OUTDIR\cyggssapi-3.dll" "$OUTDIR"
+  !insertmacro ForceCopyOnReboot data\cygwin\bin\cyggpg-error-0.dll "$OUTDIR\cyggpg-error-0.dll" "$OUTDIR"
+  !insertmacro ForceCopyOnReboot data\cygwin\bin\cyggnutls-26.dll "$OUTDIR\cyggnutls-26.dll" "$OUTDIR"
+  !insertmacro ForceCopyOnReboot data\cygwin\bin\cygasn1-8.dll "$OUTDIR\cygasn1-8.dll" "$OUTDIR"
+  !insertmacro ForceCopyOnReboot data\cygwin\bin\cyggmp-10.dll "$OUTDIR\cyggmp-10.dll" "$OUTDIR"
+  !insertmacro ForceCopyOnReboot data\cygwin\bin\cygedit-0.dll "$OUTDIR\cygedit-0.dll" "$OUTDIR"
+  !insertmacro ForceCopyOnReboot data\cygwin\bin\cyggcrypt-11.dll "$OUTDIR\cyggcrypt-11.dll" "$OUTDIR"
+  !insertmacro ForceCopyOnReboot data\cygwin\bin\cygattr-1.dll "$OUTDIR\cygattr-1.dll" "$OUTDIR"
+  !insertmacro ForceCopyOnReboot data\cygwin\bin\cygcom_err-2.dll "$OUTDIR\cygcom_err-2.dll" "$OUTDIR"
   !insertmacro ForceCopyOnReboot data\cygwin\bin\cygwin1.dll "$OUTDIR\cygwin1.dll" "$OUTDIR"
   !insertmacro ForceCopyOnReboot data\cygwin\bin\cygintl-8.dll "$OUTDIR\cygintl-8.dll" "$OUTDIR"
   !insertmacro ForceCopyOnReboot data\cygwin\bin\cygreadline7.dll "$OUTDIR\cygreadline7.dll" "$OUTDIR"
-  !insertmacro ForceCopyOnReboot data\cygwin\bin\cygncurses-9.dll "$OUTDIR\cygncurses-9.dll" "$OUTDIR" ; required by cygreadline6.dll
   !insertmacro ForceCopyOnReboot data\cygwin\bin\cygiconv-2.dll "$OUTDIR\cygiconv-2.dll" "$OUTDIR" ; required by cygintl-3.dll/cygintl-8.dll
   !insertmacro ForceCopyOnReboot data\cygwin\bin\cygz.dll "$OUTDIR\cygz.dll" "$OUTDIR"
-  !insertmacro ForceCopyOnReboot data\cygwin\bin\cygcrypto-0.9.8.dll "$OUTDIR\cygcrypto-0.9.8.dll" "$OUTDIR"
+  !insertmacro ForceCopyOnReboot data\cygwin\bin\cygcrypto-1.0.0.dll "$OUTDIR\cygcrypto-1.0.0.dll" "$OUTDIR"
   !insertmacro ForceCopyOnReboot data\cygwin\bin\cygcrypt-0.dll "$OUTDIR\cygcrypt-0.dll" "$OUTDIR" ; needed by sshd
-  !insertmacro ForceCopyOnReboot data\cygwin\bin\cygpopt-0.dll "$OUTDIR\cygpopt-0.dll" "$OUTDIR" ; required by rsync
   !insertmacro ForceCopyOnReboot data\cygwin\bin\cygwrap-0.dll "$OUTDIR\cygwrap-0.dll" "$OUTDIR"
-  !insertmacro ForceCopyOnReboot data\cygwin\bin\cygssl-0.9.8.dll "$OUTDIR\cygssl-0.9.8.dll" "$OUTDIR" ; required by wget
   !insertmacro ForceCopyOnReboot data\cygwin\bin\cyggcc_s-1.dll "$OUTDIR\cyggcc_s-1.dll" "$OUTDIR"
   !insertmacro ForceCopyOnReboot data\cygwin\bin\cyggmp-3.dll "$OUTDIR\cyggmp-3.dll" "$OUTDIR"
-  !insertmacro ForceCopyOnReboot data\cygwin\bin\cygpcre-0.dll "$OUTDIR\cygpcre-0.dll" "$OUTDIR"
   !insertmacro ForceCopyOnReboot data\cygwin\bin\cygssp-0.dll "$OUTDIR\cygssp-0.dll" "$OUTDIR"
   !insertmacro ForceCopyOnReboot data\cygwin\bin\cygrunsrv.exe "$OUTDIR\cygrunsrv.exe" "$OUTDIR"
   !insertmacro ForceCopyOnReboot data\cygwin\bin\ssh.exe "$OUTDIR\ssh.exe" "$OUTDIR"
@@ -245,7 +268,7 @@ Section "Core" Core
 
   ; The following binaries doesn't work anymore when upgrading from 1.2.3 to 2.0.0
   !insertmacro ForceCopyOnReboot data\cygwin\bin\expr.exe "$OUTDIR\expr.exe" "$OUTDIR"
-  !insertmacro ForceCopyOnReboot data\cygwin\bin\awk.exe "$OUTDIR\awk.exe" "$OUTDIR"
+  !insertmacro ForceCopyOnReboot data\cygwin\bin\awk "$OUTDIR\awk" "$OUTDIR"
   !insertmacro ForceCopyOnReboot data\cygwin\bin\rm.exe "$OUTDIR\rm.exe" "$OUTDIR"
   !insertmacro ForceCopyOnReboot data\cygwin\bin\stat.exe "$OUTDIR\stat.exe" "$OUTDIR"
   !insertmacro ForceCopyOnReboot data\cygwin\bin\grep.exe "$OUTDIR\grep.exe" "$OUTDIR"
@@ -271,14 +294,18 @@ Section "Core" Core
   !insertmacro ForceCopyOnReboot data\cygwin\bin\head.exe "$OUTDIR\head.exe" "$OUTDIR"
   !insertmacro ForceCopyOnReboot data\cygwin\bin\basename.exe "$OUTDIR\basename.exe" "$OUTDIR"
   !insertmacro ForceCopyOnReboot data\cygwin\bin\cut.exe "$OUTDIR\cut.exe" "$OUTDIR"
-  !insertmacro ForceCopyOnReboot data\cygwin\bin\cut.exe "$OUTDIR\date.exe" "$OUTDIR"
-  !insertmacro ForceCopyOnReboot data\cygwin\bin\cut.exe "$OUTDIR\dirname.exe" "$OUTDIR"
+  !insertmacro ForceCopyOnReboot data\cygwin\bin\date.exe "$OUTDIR\date.exe" "$OUTDIR"
+  !insertmacro ForceCopyOnReboot data\cygwin\bin\diff.exe "$OUTDIR\diff.exe" "$OUTDIR"
+  !insertmacro ForceCopyOnReboot data\cygwin\bin\dirname.exe "$OUTDIR\dirname.exe" "$OUTDIR"
+  !insertmacro ForceCopyOnReboot data\cygwin\bin\editrights.exe "$OUTDIR\editrights.exe" "$OUTDIR"
   !insertmacro ForceCopyOnReboot data\cygwin\bin\egrep.exe "$OUTDIR\egrep.exe" "$OUTDIR"
   !insertmacro ForceCopyOnReboot data\cygwin\bin\env.exe "$OUTDIR\env.exe" "$OUTDIR"
   !insertmacro ForceCopyOnReboot data\cygwin\bin\false.exe "$OUTDIR\false.exe" "$OUTDIR"
   !insertmacro ForceCopyOnReboot data\cygwin\bin\gawk.exe "$OUTDIR\gawk.exe" "$OUTDIR"
+  !insertmacro ForceCopyOnReboot data\cygwin\bin\gzip.exe "$OUTDIR\gzip.exe" "$OUTDIR"
   !insertmacro ForceCopyOnReboot data\cygwin\bin\id.exe "$OUTDIR\id.exe" "$OUTDIR"
   !insertmacro ForceCopyOnReboot data\cygwin\bin\join.exe "$OUTDIR\join.exe" "$OUTDIR"
+  !insertmacro ForceCopyOnReboot data\cygwin\bin\less.exe "$OUTDIR\less.exe" "$OUTDIR"
   !insertmacro ForceCopyOnReboot data\cygwin\bin\md5sum.exe "$OUTDIR\md5sum.exe" "$OUTDIR"
   !insertmacro ForceCopyOnReboot data\cygwin\bin\mkdir.exe "$OUTDIR\mkdir.exe" "$OUTDIR"
   !insertmacro ForceCopyOnReboot data\cygwin\bin\mkgroup.exe "$OUTDIR\mkgroup.exe" "$OUTDIR"
@@ -286,6 +313,7 @@ Section "Core" Core
   !insertmacro ForceCopyOnReboot data\cygwin\bin\mv.exe "$OUTDIR\mv.exe" "$OUTDIR"
   !insertmacro ForceCopyOnReboot data\cygwin\bin\passwd.exe "$OUTDIR\passwd.exe" "$OUTDIR"
   !insertmacro ForceCopyOnReboot data\cygwin\bin\ps.exe "$OUTDIR\ps.exe" "$OUTDIR"
+  !insertmacro ForceCopyOnReboot data\cygwin\bin\rebase.exe "$OUTDIR\rebase.exe" "$OUTDIR"
   !insertmacro ForceCopyOnReboot data\cygwin\bin\regtool.exe "$OUTDIR\regtool.exe" "$OUTDIR"
   !insertmacro ForceCopyOnReboot data\cygwin\bin\rmdir.exe "$OUTDIR\rmdir.exe" "$OUTDIR"
   !insertmacro ForceCopyOnReboot data\cygwin\bin\scp.exe "$OUTDIR\scp.exe" "$OUTDIR"
@@ -295,6 +323,7 @@ Section "Core" Core
   !insertmacro ForceCopyOnReboot data\cygwin\bin\split.exe "$OUTDIR\split.exe" "$OUTDIR"
   !insertmacro ForceCopyOnReboot data\cygwin\bin\ssh-add.exe "$OUTDIR\ssh-add.exe" "$OUTDIR"
   !insertmacro ForceCopyOnReboot data\cygwin\bin\ssh-agent.exe "$OUTDIR\ssh-agent.exe" "$OUTDIR"
+  !insertmacro ForceCopyOnReboot data\cygwin\bin\shutdown.exe "$OUTDIR\shutdown.exe" "$OUTDIR"
   !insertmacro ForceCopyOnReboot data\cygwin\bin\tar.exe "$OUTDIR\tar.exe" "$OUTDIR"
   !insertmacro ForceCopyOnReboot data\cygwin\bin\tee.exe "$OUTDIR\tee.exe" "$OUTDIR"
   !insertmacro ForceCopyOnReboot data\cygwin\bin\touch.exe "$OUTDIR\touch.exe" "$OUTDIR"
@@ -306,16 +335,29 @@ Section "Core" Core
   !insertmacro ForceCopyOnReboot data\cygwin\bin\wc.exe "$OUTDIR\wc.exe" "$OUTDIR"
   !insertmacro ForceCopyOnReboot data\cygwin\bin\yes.exe "$OUTDIR\yes.exe" "$OUTDIR"
   !insertmacro ForceCopyOnReboot data\cygwin\bin\zip.exe "$OUTDIR\zip.exe" "$OUTDIR"
+  !insertmacro ForceCopyOnReboot data\cygwin\bin\tree.exe "$OUTDIR\tree.exe" "$OUTDIR"
+  !insertmacro ForceCopyOnReboot data\cygwin\bin\vim.exe "$OUTDIR\vim.exe" "$OUTDIR"
+  !insertmacro ForceCopyOnReboot data\cygwin\bin\unix2mac.exe "$OUTDIR\unix2mac.exe" "$OUTDIR"
+  !insertmacro ForceCopyOnReboot data\cygwin\bin\mac2unix.exe "$OUTDIR\mac2unix.exe" "$OUTDIR"
+  !insertmacro ForceCopyOnReboot data\cygwin\bin\unix2dos.exe "$OUTDIR\unix2dos.exe" "$OUTDIR"
+  !insertmacro ForceCopyOnReboot data\cygwin\bin\dos2unix.exe "$OUTDIR\dos2unix.exe" "$OUTDIR"
+  !insertmacro ForceCopyOnReboot data\cygwin\bin\file.exe "$OUTDIR\file.exe" "$OUTDIR"
+  !insertmacro ForceCopyOnReboot data\cygwin\bin\find.exe "$OUTDIR\find.exe" "$OUTDIR"
+  !insertmacro ForceCopyOnReboot data\cygwin\bin\mktemp.exe "$OUTDIR\mktemp.exe" "$OUTDIR"
+  !insertmacro ForceCopyOnReboot data\cygwin\bin\hostname.exe "$OUTDIR\hostname.exe" "$OUTDIR"
+  !insertmacro ForceCopyOnReboot data\cygwin\bin\ln.exe "$OUTDIR\ln.exe" "$OUTDIR"
+  !insertmacro ForceCopyOnReboot data\cygwin\bin\su.exe "$OUTDIR\su.exe" "$OUTDIR"
+  !insertmacro ForceCopyOnReboot data\cygwin\usr\bin\7z "$OUTDIR\7z" "$OUTDIR"
+  !insertmacro ForceCopyOnReboot data\cygwin\usr\bin\7za "$OUTDIR\7za" "$OUTDIR"
+  !insertmacro ForceCopyOnReboot data\cygwin\usr\bin\7zr "$OUTDIR\7zr" "$OUTDIR"
 
   ; Files not depending on cygwin dlls
-  File data\cygwin\bin\rebase.exe
   File data\cygwin\bin\ssh-host-config
-  File data\cygwin\bin\editrights.exe
-  File data\cygwin\bin\shutdown.exe
-  File data\cygwin\bin\gzip.exe
+  File data\cygwin\bin\cyglsa-config
   File data\cygwin\bin\gunzip
 
   ; Pulse2 addons
+  File addons\cyglsa-uninstall
   File addons\check\pulse2-client-check.sh
   File addons\dellater\Release\dellater.exe
   File addons\pulse2-ether-list\Release\pulse2-ether-list.exe
@@ -323,16 +365,23 @@ Section "Core" Core
 
   SetOutPath "$INSTDIR\lib\csih"
   SetOverwrite on
-  File data\cygwin\lib\csih\getAccountName
-  File data\cygwin\lib\csih\getVolInfo
-  File data\cygwin\lib\csih\winProductName
+  File data\cygwin\lib\csih\getAccountName.exe
+  !insertmacro ForceCopyOnReboot data\cygwin\lib\csih\getVolInfo.exe "$OUTDIR\getVolInfo" "$OUTDIR" ; Depends on cygwin1.dll
+  File data\cygwin\lib\csih\winProductName.exe
   
   SetOutPath "$INSTDIR\usr\sbin"
   SetOverwrite on
   ; Copy-on-reboot for theses enssential binaries
   !insertmacro ForceCopyOnReboot data\cygwin\usr\sbin\sftp-server.exe "$OUTDIR\sftp-server.exe" "$OUTDIR"
   !insertmacro ForceCopyOnReboot data\cygwin\usr\sbin\sshd.exe "$OUTDIR\sshd.exe" "$OUTDIR"
-  File data\cygwin\usr\sbin\ssh-keysign.exe
+  !insertmacro ForceCopyOnReboot data\cygwin\usr\sbin\ssh-keysign.exe "$OUTDIR\ssh-keysign.exe" "$OUTDIR"
+  
+  SetOutPath "$INSTDIR\lib\p7zip"
+  SetOverwrite on
+  !insertmacro ForceCopyOnReboot data\cygwin\usr\lib\p7zip\7za.exe "$OUTDIR\7za.exe" "$OUTDIR"
+  !insertmacro ForceCopyOnReboot data\cygwin\usr\lib\p7zip\7z.exe "$OUTDIR\7z.exe" "$OUTDIR"
+  !insertmacro ForceCopyOnReboot data\cygwin\usr\lib\p7zip\7zr.exe "$OUTDIR\7zr.exe" "$OUTDIR"
+  !insertmacro ForceCopyOnReboot data\cygwin\usr\lib\p7zip\7z.so "$OUTDIR\7z.so" "$OUTDIR"
 
   SetOutPath $INSTDIR\usr\share\terminfo\63
   SetOverwrite on
@@ -359,11 +408,21 @@ Section "Core" Core
   SetOutPath $INSTDIR\etc
   SetOverwrite on
   File data\cygwin\etc\banner.txt
+  File data\cygwin\etc\bash.bashrc
+  File data\cygwin\etc\profile
   File data\cygwin\etc\moduli
+  
+  SetOutPath $INSTDIR\etc\skel
+  SetOverwrite on
+  File data\cygwin\etc\skel\.vimrc
+  
+  SetOutPath $INSTDIR\usr\share\misc
+  SetOverwrite on
+  File data\cygwin\usr\share\misc\magic.mgc
 
   SetOutPath $INSTDIR\etc\postinstall
   SetOverwrite on
-  File data\cygwin\etc\postinstall\passwd-grp.sh.done
+  File data\cygwin\etc\postinstall\000-cygwin-post-install.sh.done
 
   SetOutPath $INSTDIR\var\log
   SetOverwrite on
@@ -421,6 +480,9 @@ Section "Core" Core
     ; Run Cygwin SSH config script (2003SRV compliant)
     DetailPrint 'Running $INSTDIR\bin\bash.exe -c "export PATH=$CYGSCRIPTSPATH; MDVCURRENTDIR=\"$EXEDIR\" /usr/bin/ssh-host-config -y -c ntsec -w ${MDHASH}"'
     nsExec::ExecToLog '$INSTDIR\bin\bash.exe -c "export PATH=$CYGSCRIPTSPATH; MDVCURRENTDIR=\"$EXEDIR\" /usr/bin/ssh-host-config -y -c ntsec -w ${MDHASH}"'
+    ; Run Cygwin LSA config (user context switch without password)
+    DetailPrint 'Running $INSTDIR\bin\bash.exe -c "export PATH=/usr/bin; /usr/bin/cyglsa-config"'
+    nsExec::ExecToLog '$INSTDIR\bin\bash.exe -c "export PATH=/usr/bin; /usr/bin/cyglsa-config"'
 
     ; Try to open TCP/22 in Windows Firewall
     DetailPrint "WindowsFirewall: Let's try to open TCP/22 port..."
@@ -524,6 +586,35 @@ Section "Core" Core
       DetailPrint "Removing obsolete cygintl-3.dll at next reboot"
       nsExec::ExecToLog '"$INSTDIR\bin\dellater.exe" "$INSTDIR\bin\cygintl-3.dll"'
     ${EndIf}
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;; < 2.1.0: REMOVE OBSOLETE DLLS AT NEXT REBOOT ;;
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ${VersionCompare} $PREVIOUSVERSION "2.1.0" $R0
+    ${If} $R0 == 2
+      DetailPrint "Removing obsolete awk.exe at next reboot"
+      nsExec::ExecToLog '"$INSTDIR\bin\dellater.exe" "$INSTDIR\bin\awk.exe"'
+      DetailPrint "Removing obsolete cygcrypto-0.9.8.dll at next reboot"
+      nsExec::ExecToLog '"$INSTDIR\bin\dellater.exe" "$INSTDIR\bin\cygcrypto-0.9.8.dll"'
+      DetailPrint "Removing obsolete cygncurses-9.dll at next reboot"
+      nsExec::ExecToLog '"$INSTDIR\bin\dellater.exe" "$INSTDIR\bin\cygncurses-9.dll"'
+      DetailPrint "Removing obsolete cygpcre-0.dll at next reboot"
+      nsExec::ExecToLog '"$INSTDIR\bin\dellater.exe" "$INSTDIR\bin\cygpcre-0.dll"'
+      DetailPrint "Removing obsolete cygpopt-0.dll at next reboot"
+      nsExec::ExecToLog '"$INSTDIR\bin\dellater.exe" "$INSTDIR\bin\cygpopt-0.dll"'
+      DetailPrint "Removing obsolete cygssl-0.9.8.dll at next reboot"
+      nsExec::ExecToLog '"$INSTDIR\bin\dellater.exe" "$INSTDIR\bin\cygssl-0.9.8.dll"'
+      DetailPrint "Removing obsolete getAccountName at next reboot"
+      nsExec::ExecToLog '"$INSTDIR\bin\dellater.exe" "$INSTDIR\lib\csih\getAccountName"'
+      DetailPrint "Removing obsolete getVolInfo at next reboot"
+      nsExec::ExecToLog '"$INSTDIR\bin\dellater.exe" "$INSTDIR\lib\csih\getVolInfo"'
+      DetailPrint "Removing obsolete winProductName at next reboot"
+      nsExec::ExecToLog '"$INSTDIR\bin\dellater.exe" "$INSTDIR\lib\csih\winProductName"'
+      DetailPrint "Removing obsolete passwd-grp.sh.done at next reboot"
+      nsExec::ExecToLog '"$INSTDIR\bin\dellater.exe" "$INSTDIR\etc\postinstall\passwd-grp.sh.done"'
+      ; Run Cygwin LSA config (user context switch without password)
+      DetailPrint 'Running $INSTDIR\bin\bash.exe -c "export PATH=$CYGSCRIPTSPATH; /usr/bin/cyglsa-config"'
+      nsExec::ExecToLog '$INSTDIR\bin\bash.exe -c "export PATH=$CYGSCRIPTSPATH; /usr/bin/cyglsa-config"'
+    ${EndIf}
   ${EndIf}
 SectionEnd
 
@@ -587,6 +678,10 @@ Section Uninstall
     ; Wait one second for the service to be really stopped
     Sleep 1000
   ${EndIf}
+  
+  ; Try to remove Cygwin LSA package    
+  DetailPrint 'Running $INSTDIR\bin\bash.exe -c "export PATH=/usr/bin; /usr/bin/cyglsa-uninstall"'
+  nsExec::ExecToLog '$INSTDIR\bin\bash.exe -c "export PATH=/usr/bin; /usr/bin/cyglsa-uninstall"'
 
   ; Drop uninstaller and files
   Delete "$INSTDIR\uninst.exe"

@@ -12,6 +12,8 @@ cmp.exe
 cp.exe
 cut.exe
 cygcheck.exe
+cyglsa.dll
+cyglsa64.dll
 cygpath.exe
 cygrunsrv.exe
 date.exe
@@ -31,15 +33,18 @@ getfacl.exe
 grep.exe
 gzip.exe
 head.exe
+hostname.exe
 id.exe
 join.exe
 less.exe
+ln.exe
 ls.exe
 mac2unix.exe
 md5sum.exe
 mkdir.exe
 mkgroup.exe
 mkpasswd.exe
+mktemp.exe
 mount.exe
 mv.exe
 passwd.exe

@@ -108,7 +108,7 @@ for binary in `cat binaries-list`; do
 done
 
 # A few more regular needed files
-for FILE in `which gunzip` `which awk` /etc/defaults/etc/ssh_config /etc/defaults/etc/sshd_config /etc/moduli /usr/share/terminfo/63/cygwin /usr/share/csih/cygwin-service-installation-helper.sh /etc/postinstall/000-cygwin-post-install.sh.done /bin/ssh-host-config /lib/csih/getAccountName /lib/csih/getVolInfo /lib/csih/winProductName /etc/profile /etc/bash.bashrc /usr/bin/7z /usr/bin/7za /usr/bin/7zr /usr/share/misc/magic.mgc; do
+for FILE in `which gunzip` `which awk` /etc/defaults/etc/ssh_config /etc/defaults/etc/sshd_config /etc/moduli /usr/share/terminfo/63/cygwin /usr/share/terminfo/78/xterm /usr/share/csih/cygwin-service-installation-helper.sh /etc/postinstall/000-cygwin-post-install.sh.done /bin/ssh-host-config /lib/csih/getAccountName /lib/csih/getVolInfo /lib/csih/winProductName /etc/profile /etc/bash.bashrc /usr/bin/7z /usr/bin/7za /usr/bin/7zr /usr/share/misc/magic.mgc /bin/cyglsa-config; do
   cp -v --parents ${FILE} ${DESTDIR}
   chmod -R 755 ${DESTDIR}/${FILE}
   if [ "${FILE}" == "/etc/moduli" ]; then
@@ -133,11 +133,11 @@ done
 mkdir ${DESTDIR}/etc/skel/
 echo 'set nocompatible' > ${DESTDIR}/etc/skel/.vimrc
 echo 'syn on' >> ${DESTDIR}/etc/skel/.vimrc
-
+echo -e "/etc/skel/.vimrc\t\t\tgenerated" >> README.Rebuild
 chmod -R 755 ${DESTDIR}
 
 cat README.Rebuild | sed 's!^!data/cygwin!' | sort > README.Rebuild2
 mv README.Rebuild2 README.Rebuild
 
 echo "Done!!"
-echo "However you still need to patch ssh-host-config, cygwin-service-installation-helper.sh and cygwin1.dll"
+echo "However you still need to patch ssh-host-config, cygwin-service-installation-helper.sh, cyglsa-config and cygwin1.dll"
