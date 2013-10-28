@@ -1,11 +1,11 @@
---- cygwin-service-installation-helper.sh	2010-03-23 14:23:21.687340881 +0100
-+++ cygwin-service-installation-helper.sh.new	2010-03-23 15:30:24.591339616 +0100
-@@ -224,7 +224,7 @@
+--- ./usr/share/csih/cygwin-service-installation-helper.sh	2013-10-25 12:16:02.766764741 +0200
++++ /tmp/cygwin-service-installation-helper.sh.new	2013-10-25 12:17:40.015188195 +0200
+@@ -701,7 +701,7 @@
+     _csih_windows8=$(/usr/bin/uname | /usr/bin/awk -F- '{print ( $2 >= 6.2 ) ? 1 : 0;}')
  fi
- readonly _csih_sys _csih_nt _csih_2k _csih_xp _csih_nt2003 _csih_vista
- 
--_csih_cygver=$(b=`uname -r` && echo "${b%%(*}")
+ readonly _csih_sys _csih_nt _csih_2k _csih_xp _csih_nt2003 _csih_vista _csih_windows7 _csih_windows8
+-_csih_cygver=$(b=$(/usr/bin/uname -r) && echo "${b%%(*}")
 +_csih_cygver="1.7.0"
- _csih_cygver_is_oneseven=`echo ${_csih_cygver} | awk -F. '{print ( $1 > 1 || ($1 == 1 && $2 >= 7) ) ? 1 : 0;}'`
- readonly _csih_cygver _csih_cygver_is_oneseven
- 
+ _csih_cygver_is_oneseven=$(echo ${_csih_cygver} | /usr/bin/awk -F. '{print ( $1 > 1 || ($1 == 1 && $2 >= 7) ) ? 1 : 0;}')
+ _csih_cygwin_is_64bit=$(/usr/bin/uname -m | grep 'x86_64' >/dev/null && echo 1 || echo 0)
+ readonly _csih_cygver _csih_cygver_is_oneseven _csih_cygwin_is_64bit

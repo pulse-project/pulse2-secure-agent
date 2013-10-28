@@ -1,23 +1,23 @@
---- cygwin-service-installation-helper.sh.orig	2009-05-28 15:31:31.179179322 +0200
-+++ cygwin-service-installation-helper.sh	2009-05-28 15:35:05.055780226 +0200
-@@ -1975,7 +1975,7 @@
+--- ./usr/share/csih/cygwin-service-installation-helper.sh	2013-10-25 12:12:15.463125988 +0200
++++ /tmp/cygwin-service-installation-helper.sh.new	2013-10-25 12:14:47.573530435 +0200
+@@ -2221,7 +2221,7 @@
+ 
+   if [ -z "${_csih_all_preexisting_privileged_accounts}" ]
    then
-     if [ -z "${_csih_all_preexisting_privileged_accounts}" ]
-     then
--      for username in "$opt_username" $_csih_well_known_privileged_accounts
-+      for username in sshd_server
-       do
-         # because we quote opt_username (to allow spaces), then we
-         # might have username="" if no -u option was specified. Check
-@@ -2392,9 +2392,9 @@
-         fi
-         if [ -n "$opt_default_username" ]
-         then
--          username="$opt_default_username"
-+          username="sshd_server"
-         else
--          username="cyg_server"
-+          username="sshd_server"
-         fi
+-    for username in "$opt_username" $_csih_well_known_privileged_accounts
++    for username in sshd_server
+     do
+       # because we quote opt_username (to allow spaces), then we
+       # might have username="" if no -u option was specified. Check
+@@ -2615,9 +2615,9 @@
+       fi
+       if [ -n "$opt_default_username" ]
+       then
+-        username="$opt_default_username"
++        username="sshd_server"
        else
-         # nt/2k/xp and not csih_FORCE_PRIVILEGED_USER and username is empty
+-        username="cyg_server"
++        username="sshd_server"
+       fi
+     else
+       # nt/2k/xp32 and not csih_FORCE_PRIVILEGED_USER and username is empty
