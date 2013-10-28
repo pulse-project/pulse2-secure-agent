@@ -1,0 +1,49 @@
+--- /tmp/cyglsa-config	2013-10-25 15:36:37.796138207 +0200
++++ data/cygwin/bin/cyglsa-config	2013-10-25 15:37:30.746218325 +0200
+@@ -66,7 +66,7 @@
+ echo "administrator privileges!  You also have to reboot the machine to"
+ echo "activate the change."
+ echo
+-request "Are you sure you want to continue?" || exit 0
++#request "Are you sure you want to continue?" || exit 0
+ 
+ # The registry value which keeps the authentication packages.
+ value='/HKEY_LOCAL_MACHINE/SYSTEM/CurrentControlSet/Control/Lsa/Authentication Packages'
+@@ -104,20 +104,20 @@
+ echo "Cygwin LSA authentication package registered."
+ echo
+ echo "Activating Cygwin's LSA authentication package requires to reboot."
+-if [ -x /bin/shutdown ]
+-then
+-  if request "Do you want to do this immediately?"
+-  then
+-    echo
+-    echo "Other users might still be working on this machine."
+-    echo
+-    if request "Are you sure?"
+-    then
+-      echo
+-      echo "Ok, will reboot in 30 seconds."
+-      echo
+-      echo "If you change your mind, call 'shutdown -a' within 30 seconds"
+-      shutdown -r 30
+-    fi
+-  fi
+-fi
++#if [ -x /bin/shutdown ]
++#then
++#  if request "Do you want to do this immediately?"
++#  then
++#    echo
++#    echo "Other users might still be working on this machine."
++#    echo
++#    if request "Are you sure?"
++#    then
++#      echo
++#      echo "Ok, will reboot in 30 seconds."
++#      echo
++#      echo "If you change your mind, call 'shutdown -a' within 30 seconds"
++#      shutdown -r 30
++#    fi
++#  fi
++#fi

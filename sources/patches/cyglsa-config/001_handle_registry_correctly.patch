@@ -1,0 +1,20 @@
+--- data/cygwin/bin/cyglsa-config	2013-10-25 16:55:36.412414842 +0200
++++ /tmp/cyglsa-config	2013-10-25 16:57:16.308794617 +0200
+@@ -90,10 +90,17 @@
+ # Get old content, remove every trace of "cyglsa" from it and write the
+ # content back to the registry with the new, correct path to the cyglsa DLL.
+ old=`regtool get "${value}"`
++
++OLDIFS=${IFS}
++IFS=$'\n'
++
+ new=`for i in ${old}
+ do
+   echo $i | GREP_OPTIONS="" grep -v cyglsa
+ done`
++
++IFS=${OLDIFS}
++
+ if ! regtool set "${value}" ${new} "${bindir}\\cyglsa\\${dll}"
+ then
+   echo "Setting the new registry value failed.  Exiting."

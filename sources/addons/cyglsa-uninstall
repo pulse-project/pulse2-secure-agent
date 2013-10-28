@@ -1,0 +1,62 @@
+#!/bin/bash
+#
+# cyglsa-uninstall, Copyright 2006, 2010 Red Hat Inc.
+#
+#     This program is free software; you can redistribute it and/or modify
+#     it under the terms of the GNU General Public License as published by
+#     the Free Software Foundation; either version 2 of the License, or
+#     (at your option) any later version.
+#
+#     A copy of the GNU General Public License can be found at
+#     http://www.gnu.org/
+#
+# This file is part of the Cygwin LSA authentication package.
+
+# Check if running under at least Windows 2000
+_nt_too_old=`uname | awk -F- '{print ( $2 < 5.0 ) ? 1 : 0;}'`
+if [ ${_nt_too_old} -eq 1 ]
+then
+  echo "Cygwin LSA authentication not supported on Windows NT4 or older.  Exiting."
+  exit 1
+fi
+
+# Directory in which cyglsa DLL is installed as DOS path.
+bindir=`cygpath -w /`\\bin
+rootdir=`cygpath -w /`
+
+# Check if we're running on 64 bit Windows.  If so, we need the 64 bit
+# cyglsa DLL.
+dll=cyglsa.dll
+test -d `cygpath -p ${SYSTEMROOT}`/SysWOW64 && dll=cyglsa64.dll
+
+# The registry value which keeps the authentication packages.
+value='/HKEY_LOCAL_MACHINE/SYSTEM/CurrentControlSet/Control/Lsa/Authentication Packages'
+
+# Delete DLL at next reboot
+if [ -f "/bin/cyglsa/${dll}" ]; then
+ echo "Removing "${bindir}\\cyglsa\\${dll}" at next reboot"
+ dellater "${bindir}\\cyglsa\\${dll}"
+ dellater "${bindir}\\cyglsa"
+ dellater "${bindir}"
+ dellater "${rootdir}"
+fi
+
+# Get old content, remove every trace of "cyglsa" from it and write the
+# content back to the registry
+old=`regtool get "${value}"`
+
+OLDIFS=${IFS}
+IFS=$'\n'
+
+new=`for i in ${old}
+do
+  echo $i | GREP_OPTIONS="" grep -v cyglsa
+done`
+
+IFS=${OLDIFS}
+
+if ! regtool set "${value}" ${new}
+then
+  echo "Setting the new registry value failed.  Exiting."
+  exit 1
+fi
