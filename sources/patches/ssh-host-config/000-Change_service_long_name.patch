@@ -1,20 +1,20 @@
---- ssh-host-config.orig	2010-03-15 14:04:54.381460406 +0100
-+++ ssh-host-config	2010-03-15 14:05:23.061448368 +0100
-@@ -339,7 +339,7 @@
- 	fi
- 	if [ -z "${password}" ]
+--- bin/ssh-host-config	2013-10-25 11:10:55.119021301 +0200
++++ /tmp/ssh-host-config.new	2013-10-25 12:22:09.153292027 +0200
+@@ -479,7 +479,7 @@
+       fi
+       if [ -z "${password}" ]
+       then
+-	if /usr/bin/cygrunsrv -I sshd -d "CYGWIN sshd" -p /usr/sbin/sshd \
++	if /usr/bin/cygrunsrv -I sshd -d "Mandriva OpenSSH agent" -p /usr/sbin/sshd \
+ 			      -a "-D" -y tcpip "${cygwin_env[@]}"
  	then
--	  if cygrunsrv -I sshd -d "CYGWIN sshd" -p /usr/sbin/sshd \
-+	  if cygrunsrv -I sshd -d "Mandriva OpenSSH agent" -p /usr/sbin/sshd \
- 			    -a "-D" -y tcpip "${cygwin_env[@]}"
- 	  then
- 	    echo
-@@ -349,7 +349,7 @@
- 	    csih_inform "will start automatically after the next reboot."
- 	  fi
- 	else
--	  if cygrunsrv -I sshd -d "CYGWIN sshd" -p /usr/sbin/sshd \
-+	  if cygrunsrv -I sshd -d "Mandriva OpenSSH agent" -p /usr/sbin/sshd \
- 			    -a "-D" -y tcpip "${cygwin_env[@]}" \
- 			    -u "${run_service_as}" -w "${password}"
- 	  then
+ 	  echo
+@@ -489,7 +489,7 @@
+ 	  csih_inform "will start automatically after the next reboot."
+ 	fi
+       else
+-	if /usr/bin/cygrunsrv -I sshd -d "CYGWIN sshd" -p /usr/sbin/sshd \
++	if /usr/bin/cygrunsrv -I sshd -d "Mandriva OpenSSH agent" -p /usr/sbin/sshd \
+ 			      -a "-D" -y tcpip "${cygwin_env[@]}" \
+ 			      -u "${run_service_as}" -w "${password}"
+ 	then

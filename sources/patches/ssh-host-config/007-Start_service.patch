@@ -1,13 +1,14 @@
---- ssh-host-config	2010-10-05 15:21:24.655015239 +0200
-+++ ssh-host-config.new	2010-10-05 15:22:13.531221125 +0200
-@@ -643,3 +643,10 @@
-   csih_inform "No ssh public key (id_dsa.pub/id_rsa.pub) found in \"${MDVCURRENTDIRPOSIX}\", \"C:\", or \"${SYSTEMDRIVE}\"."
+--- bin/ssh-host-config	2013-10-25 12:34:35.977851841 +0200
++++ /tmp/ssh-host-config.new	2013-10-25 12:35:15.368404999 +0200
+@@ -855,4 +855,11 @@
  
  fi
-+
+ 
 +echo
 +if cygrunsrv -S sshd; then
 +  csih_inform "Mandriva OpenSSH agent started."
 +else
 +  csih_error "Mandriva OpenSSH agent could not be started."
 +fi
++
+ exit $warning_cnt

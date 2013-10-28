@@ -1,13 +1,13 @@
---- ssh-host-config.orig	2009-03-02 14:53:45.706878385 +0100
-+++ ssh-host-config	2009-03-02 14:56:37.467966185 +0100
-@@ -466,6 +466,10 @@
-   csih_error "There are still ssh processes running. Please shut them down first."
- fi
+--- /tmp/ssh-host-config	2013-10-25 15:05:53.362963124 +0200
++++ data/cygwin/bin/ssh-host-config	2013-10-25 15:05:36.107587781 +0200
+@@ -625,6 +625,10 @@
+ # Action!
+ # ======================================================================
  
 +# Create /etc/passwd and /etc/group
-+chmod 755 /etc/postinstall/passwd-grp.sh.done
-+/etc/postinstall/passwd-grp.sh.done
++chmod 755 /etc/postinstall/000-cygwin-post-install.sh.done
++/etc/postinstall/000-cygwin-post-install.sh.done
 +
- # Check for ${SYSCONFDIR} directory
- csih_make_dir "${SYSCONFDIR}" "Cannot create global configuration files."
- chmod 775 "${SYSCONFDIR}"
+ # Check for running ssh/sshd processes first. Refuse to do anything while
+ # some ssh processes are still running
+ if /usr/bin/ps -ef | /usr/bin/grep -q '/sshd\?$'

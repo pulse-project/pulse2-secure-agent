@@ -1,26 +1,27 @@
---- ssh-host-config.orig	2010-03-15 14:05:48.405440761 +0100
-+++ ssh-host-config	2010-03-15 14:08:24.389442407 +0100
-@@ -339,8 +339,9 @@
- 	fi
- 	if [ -z "${password}" ]
+--- bin/ssh-host-config	2013-10-25 12:22:39.268184887 +0200
++++ /tmp/ssh-host-config.new	2013-10-25 12:26:06.360573269 +0200
+@@ -479,8 +479,10 @@
+       fi
+       if [ -z "${password}" ]
+       then
++	# Compute PATH to avoid conflicting with another cygwin installation
+ 	if /usr/bin/cygrunsrv -I sshd -d "Mandriva OpenSSH agent" -p /usr/sbin/sshd \
+-			      -a "-D" -y tcpip "${cygwin_env[@]}"
++			      -a "-D" -y tcpip "${cygwin_env[@]}" \
++			      -e PATH="/cygdrive/`echo ${WINDIR} | sed 'si:\\\i/i'`/system32:/cygdrive/`echo ${WINDIR} | sed 'si:\\\i/i'`:/cygdrive/`echo ${WINDIR} | sed 'si:\\\i/i'`/System32/Wbem:/cygdrive/`mount | grep '/usr/bin' | awk -F' on ' '{ print $1 }' | sed 'si:\\\i/ig' | sed 'si\\\i/ig'`"
  	then
-+	  # Compute PATH to avoid conflicting with another cygwin installation
- 	  if cygrunsrv -I sshd -d "Mandriva OpenSSH agent" -p /usr/sbin/sshd \
--			    -a "-D" -y tcpip "${cygwin_env[@]}"
-+			    -a "-D" -y tcpip "${cygwin_env[@]}" -e PATH="/cygdrive/`echo ${WINDIR} | sed 'si:\\\i/i'`/system32:/cygdrive/`echo ${WINDIR} | sed 'si:\\\i/i'`:/cygdrive/`echo ${WINDIR} | sed 'si:\\\i/i'`/System32/Wbem:/cygdrive/`mount | grep '/usr/bin' | awk -F' on ' '{ print $1 }' | sed 'si:\\\i/ig' | sed 'si\\\i/ig'`"
- 	  then
- 	    echo
- 	    csih_inform "The sshd service has been installed under the LocalSystem"
-@@ -349,9 +350,11 @@
- 	    csih_inform "will start automatically after the next reboot."
- 	  fi
- 	else
-+	  # Compute PATH to avoid conflicting with another cygwin installation
- 	  if cygrunsrv -I sshd -d "Mandriva OpenSSH agent" -p /usr/sbin/sshd \
- 			    -a "-D" -y tcpip "${cygwin_env[@]}" \
--			    -u "${run_service_as}" -w "${password}"
-+			    -e PATH="/cygdrive/`echo ${WINDIR} | sed 'si:\\\i/i'`/system32:/cygdrive/`echo ${WINDIR} | sed 'si:\\\i/i'`:/cygdrive/`echo ${WINDIR} | sed 'si:\\\i/i'`/System32/Wbem:/cygdrive/`mount | grep '/usr/bin' | awk -F' on ' '{ print $1 }' | sed 'si:\\\i/ig' | sed 'si\\\i/ig'`" \
-+                            -u "${run_service_as}" -w "${password}"
- 	  then
- 	    echo
- 	    csih_inform "The sshd service has been installed under the '${run_service_as}'"
+ 	  echo
+ 	  csih_inform "The sshd service has been installed under the LocalSystem"
+@@ -489,9 +491,11 @@
+ 	  csih_inform "will start automatically after the next reboot."
+ 	fi
+       else
++	# Compute PATH to avoid conflicting with another cygwin installation
+ 	if /usr/bin/cygrunsrv -I sshd -d "Mandriva OpenSSH agent" -p /usr/sbin/sshd \
+ 			      -a "-D" -y tcpip "${cygwin_env[@]}" \
+-			      -u "${run_service_as}" -w "${password}"
++			      -u "${run_service_as}" -w "${password}" \
++			      -e PATH="/cygdrive/`echo ${WINDIR} | sed 'si:\\\i/i'`/system32:/cygdrive/`echo ${WINDIR} | sed 'si:\\\i/i'`:/cygdrive/`echo ${WINDIR} | sed 'si:\\\i/i'`/System32/Wbem:/cygdrive/`mount | grep '/usr/bin' | awk -F' on ' '{ print $1 }' | sed 'si:\\\i/ig' | sed 'si\\\i/ig'`"
+ 	then
+ 	  /usr/bin/editrights -u "${run_service_as}" -a SeServiceLogonRight
+ 	  echo

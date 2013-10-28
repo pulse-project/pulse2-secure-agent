@@ -1,9 +1,10 @@
---- ssh-host-config	2010-10-05 15:17:32.031514050 +0200
-+++ ssh-host-config.new	2010-10-05 15:19:24.417776137 +0200
-@@ -593,3 +593,53 @@
- echo
- csih_inform "Host configuration finished. Have fun!"
- 
+--- bin/ssh-host-config	2013-10-25 12:29:29.329116316 +0200
++++ /tmp/ssh-host-config.new	2013-10-25 12:33:40.659883759 +0200
+@@ -803,4 +803,56 @@
+   csih_warning "Make sure that all problems reported are fixed,"
+   csih_warning "then re-run ssh-host-config."
+ fi
++
 +# Create .ssh directory in root's home
 +# Use windows' cmd.exe to avoid crappy permissions
 +winhome=`cygpath -w ${home}`
@@ -54,3 +55,5 @@
 +  csih_inform "No ssh public key (id_dsa.pub/id_rsa.pub) found in \"${MDVCURRENTDIRPOSIX}\", \"C:\", or \"${SYSTEMDRIVE}\"."
 +
 +fi
++
+ exit $warning_cnt

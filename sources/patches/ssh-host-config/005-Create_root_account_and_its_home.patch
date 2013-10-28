@@ -1,8 +1,8 @@
---- ssh-host-config.orig	2009-03-03 11:01:29.597706268 +0100
-+++ ssh-host-config	2009-03-03 11:01:56.266203354 +0100
-@@ -470,6 +470,29 @@
- chmod 755 /etc/postinstall/passwd-grp.sh.done
- /etc/postinstall/passwd-grp.sh.done
+--- /tmp/ssh-host-config	2013-10-25 15:18:41.195150962 +0200
++++ data/cygwin/bin/ssh-host-config	2013-10-25 15:19:01.594411664 +0200
+@@ -671,6 +671,35 @@
+ 
+ warning_cnt=0
  
 +# We may use 'root' account too, so let's bind it to the local admin user
 +# Local admin SID always begins with S-5-1 and ends with -500
@@ -19,11 +19,17 @@
 +# Create its home directory if not exists
 +echo
 +home=`cat /etc/passwd | grep '^root' | awk -F: '{ print $6 }'`
-+if [ ! -d ${home} ]; then
++if [ ! -d "${home}" ]; then
 +  # Use windows' cmd.exe to avoid crappy permissions
 +  winhome=`cygpath -w ${home}`
 +  csih_inform "Creating ${winhome}."
 +  echo -e "mkdir \"${winhome}\"" | cmd.exe
++  echo
++fi
++# vimrc for root
++if [ ! -f "${home}/.vimrc" ]; then
++  csih_inform "Creating new .vimrc"
++  cp "/etc/skel/.vimrc" "${home}/.vimrc"
 +  echo
 +fi
 +

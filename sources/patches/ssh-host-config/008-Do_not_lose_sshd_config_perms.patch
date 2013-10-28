@@ -1,17 +1,18 @@
---- ssh-host-config.orig	2010-03-15 14:11:19.929441367 +0100
-+++ ssh-host-config	2010-03-15 14:12:50.857439519 +0100
-@@ -172,12 +172,10 @@
+--- bin/ssh-host-config	2013-10-25 12:35:32.307782815 +0200
++++ /tmp/ssh-host-config.new	2013-10-25 12:38:00.590336611 +0200
+@@ -214,12 +214,11 @@
    then
      csih_inform "Updating ${SYSCONFDIR}/sshd_config file"
      sshdconfig_tmp=${SYSCONFDIR}/sshd_config.$$
--    sed -e "s/^#UsePrivilegeSeparation yes/UsePrivilegeSeparation ${privsep_used}/
-+    sed -i -e "s/^#UsePrivilegeSeparation yes/UsePrivilegeSeparation ${privsep_used}/
+-    /usr/bin/sed -e "s/^#UsePrivilegeSeparation yes/UsePrivilegeSeparation ${privsep_used}/
++    /usr/bin/sed -i -e "s/^#UsePrivilegeSeparation yes/UsePrivilegeSeparation ${privsep_used}/
    	  s/^#Port 22/Port ${port_number}/
    	  s/^#StrictModes yes/StrictModes no/" \
 -	< ${SYSCONFDIR}/sshd_config \
 -	> "${sshdconfig_tmp}"
--    mv "${sshdconfig_tmp}" ${SYSCONFDIR}/sshd_config
-+          ${SYSCONFDIR}/sshd_config
-   elif [ "${privsep_configured}" != "yes" ]
-   then
-     echo >> ${SYSCONFDIR}/sshd_config
+-    if ! /usr/bin/mv "${sshdconfig_tmp}" ${SYSCONFDIR}/sshd_config
++	${SYSCONFDIR}/sshd_config
++    if [ ! $? -eq 0 ];
+     then
+ 	csih_warning "Setting privilege separation to 'yes' failed!"
+ 	csih_warning "Check your ${SYSCONFDIR}/sshd_config file!"
