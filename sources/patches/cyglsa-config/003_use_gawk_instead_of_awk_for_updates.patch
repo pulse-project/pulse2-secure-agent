@@ -1,0 +1,11 @@
+--- data/cygwin/bin/cyglsa-config	2013-11-14 15:28:44.251905918 +0100
++++ /tmp/cyglsa-config	2013-11-14 15:49:37.561816220 +0100
+@@ -39,7 +39,7 @@
+ }
+ 
+ # Check if running under at least Windows 2000
+-_nt_too_old=`uname | awk -F- '{print ( $2 < 5.0 ) ? 1 : 0;}'`
++_nt_too_old=`uname | gawk -F- '{print ( $2 < 5.0 ) ? 1 : 0;}'`
+ if [ ${_nt_too_old} -eq 1 ]
+ then
+   echo "Cygwin LSA authentication not supported on Windows NT4 or older.  Exiting."
