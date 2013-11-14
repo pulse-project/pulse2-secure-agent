@@ -605,8 +605,6 @@ Section "Core" Core
       nsExec::ExecToLog '"$INSTDIR\bin\dellater.exe" "$INSTDIR\bin\cygssl-0.9.8.dll"'
       DetailPrint "Removing obsolete getAccountName at next reboot"
       nsExec::ExecToLog '"$INSTDIR\bin\dellater.exe" "$INSTDIR\lib\csih\getAccountName"'
-      DetailPrint "Removing obsolete getVolInfo at next reboot"
-      nsExec::ExecToLog '"$INSTDIR\bin\dellater.exe" "$INSTDIR\lib\csih\getVolInfo"'
       DetailPrint "Removing obsolete winProductName at next reboot"
       nsExec::ExecToLog '"$INSTDIR\bin\dellater.exe" "$INSTDIR\lib\csih\winProductName"'
       DetailPrint "Removing obsolete passwd-grp.sh.done at next reboot"
