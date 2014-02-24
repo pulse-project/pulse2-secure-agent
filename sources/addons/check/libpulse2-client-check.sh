@@ -34,6 +34,22 @@ getHostname() {
     hostname | tr "[a-z]" "[A-Z]"
 }
 
+# Case insensitive match
+# Return 0 if match, 1 otherwise
+istrcompare() {
+    # Need two params
+    if [ -z "${1}" ] || [ -z "${2}" ]; then
+      return 1
+    fi
+    ival1=`echo "${1}" | tr "[a-z]" "[A-Z]"`
+    ival2=`echo "${2}" | tr "[a-z]" "[A-Z]"`
+    if [ "${ival1}" = "${ival2}" ]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
 # Get IP addresses
 getIP() {
     if isWindows; then
@@ -142,7 +158,7 @@ verifyValue() {
     case "${var}" in
         HOSTNAME)
             hostname=`getHostname`
-            if [ ! "${value}" = "$hostname" ]; then
+            if ! `istrcompare "${value}" "${hostname}"`; then
                 echo "HOSTNAME MISMATCH: $hostname"
                 exit 1
             fi
@@ -151,7 +167,7 @@ verifyValue() {
             mismatch=1
             ips=`getIP | tr -s '[[:space:]]' | sed 's/[[:space:]]\+$//'`
             for ip in ${ips}; do
-                if [ "${value}" = "${ip}" ]; then mismatch=0; fi
+                if `istrcompare "${value}" "${ip}"`; then mismatch=0; fi
             done
             if [ ${mismatch} -eq 1 ]; then
                 echo "IP Address mismatch ! Wanted \"${value}\", found \"${ips}\""
@@ -162,7 +178,7 @@ verifyValue() {
             mismatch=1
             macs=`getMac | tr -s '[[:space:]]' | sed 's/[[:space:]]\+$//'`
             for mac in ${macs}; do
-                if [ "${value}" = "${mac}" ]; then mismatch=0; fi
+                if `istrcompare "${value}" "${mac}"`; then mismatch=0; fi
             done
             if [ ${mismatch} -eq 1 ]; then
                 echo "MAC Address mismatch ! Wanted \"${value}\", found \"${macs}\""
