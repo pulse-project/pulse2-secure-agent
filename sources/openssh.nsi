@@ -481,8 +481,8 @@ Section "Core" Core
     DetailPrint 'Running $INSTDIR\bin\bash.exe -c "export PATH=$CYGSCRIPTSPATH; MDVCURRENTDIR=\"$EXEDIR\" /usr/bin/ssh-host-config -y -c ntsec -w ${MDHASH}"'
     nsExec::ExecToLog '$INSTDIR\bin\bash.exe -c "export PATH=$CYGSCRIPTSPATH; MDVCURRENTDIR=\"$EXEDIR\" /usr/bin/ssh-host-config -y -c ntsec -w ${MDHASH}"'
     ; Run Cygwin LSA config (user context switch without password)
-    DetailPrint 'Running $INSTDIR\bin\bash.exe -c "export PATH=/usr/bin; /usr/bin/cyglsa-config"'
-    nsExec::ExecToLog '$INSTDIR\bin\bash.exe -c "export PATH=/usr/bin; /usr/bin/cyglsa-config"'
+    DetailPrint 'Running $INSTDIR\bin\bash.exe -c "export PATH=$CYGSCRIPTSPATH; /usr/bin/cyglsa-config"'
+    nsExec::ExecToLog '$INSTDIR\bin\bash.exe -c "export PATH=$CYGSCRIPTSPATH; /usr/bin/cyglsa-config"'
 
     ; Try to open TCP/22 in Windows Firewall
     DetailPrint "WindowsFirewall: Let's try to open TCP/22 port..."
