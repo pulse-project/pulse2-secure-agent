@@ -65,10 +65,13 @@ getIP() {
         echo
     else
         # Linux
-	interfaces=`LANG=C ifconfig -a | grep 'Link encap:Ethernet' | awk '{ print $1 }' | tr "\n" " "`
+	interfaces=`LANG=C ifconfig -a | grep 'Link encap:' | grep -v 'Link encap:Local Loopback' | awk '{ print $1 }' | tr "\n" " "`
         for interface in ${interfaces}; do 
-            LANC=C ifconfig $interface | grep 'inet adr:' | awk '{ print $2 }' | awk -F: '{ print $2 }' | tr "\n" " ";
+            LANC=C ifconfig $interface | grep 'inet addr:' | awk '{ print $2 }' | awk -F: '{ print $2 }' | tr "\n" " ";
         done
+        if [ -x `which ipmitool` ]; then
+            ipmitool lan print | grep '^IP Address[[:space:]]\+:' |cut -d: -f2- | tr -d '[[:space:]]' | sed 's!$! !' | tr "[a-z]" "[A-Z]"
+        fi
         echo
     fi
     echo
@@ -89,6 +92,9 @@ getMac() {
     else
         # Linux
 	LANG=C ifconfig -a | grep 'Link encap:Ethernet' | awk -F'HWaddr' '{ print $2 }' | sed 's/[[:space:]]//g' | tr "[a-z]" "[A-Z]" | tr "\n" " "
+        if [ -x `which ipmitool` ]; then
+            ipmitool lan print | grep '^MAC Address' |cut -d: -f2- | tr -d '[[:space:]]' | sed 's!$! !' | tr "[a-z]" "[A-Z]"
+        fi
         echo
     fi
 }
