@@ -1,0 +1,13 @@
+Source: pulse2-client-check
+Section: misc
+Priority: extra
+Maintainer: Adam Cécile <acecile@mandriva.com>
+Build-Depends: debhelper (>= 5)
+Standards-Version: 3.9.5
+
+Package: pulse2-client-check
+Architecture: all
+Depends: ${misc:Depends}
+Description: Pulse2 client check helper
+ Helper to verify mac address, IP and hostname
+ when deploying using Pulse 2.

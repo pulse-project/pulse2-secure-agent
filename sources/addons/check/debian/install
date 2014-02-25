@@ -1,0 +1,2 @@
+libpulse2-client-check.sh	/usr/share/pulse2/
+pulse2-client-check.sh		/usr/bin/
