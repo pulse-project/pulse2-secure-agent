@@ -31,7 +31,10 @@ isMacOS() {
 
 # Get computer's hostname
 getHostname() {
-    hostname | tr "[a-z]" "[A-Z]"
+    hostname -f | tr "[a-z]" "[A-Z]"
+}
+getShortHostname() {
+    hostname -s | tr "[a-z]" "[A-Z]"
 }
 
 # Case insensitive match
@@ -67,10 +70,10 @@ getIP() {
         # Linux
 	interfaces=`LANG=C ifconfig -a | grep 'Link encap:' | grep -v 'Link encap:Local Loopback' | awk '{ print $1 }' | tr "\n" " "`
         for interface in ${interfaces}; do 
-            LANC=C ifconfig $interface | grep 'inet addr:' | awk '{ print $2 }' | awk -F: '{ print $2 }' | tr "\n" " ";
+            LANC=C ifconfig $interface | grep -e 'inet addr:' -e 'inet adr:' | awk '{ print $2 }' | awk -F: '{ print $2 }' | tr "\n" " ";
         done
-        if [ -x `which ipmitool` ]; then
-            ipmitool lan print | grep '^IP Address[[:space:]]\+:' |cut -d: -f2- | tr -d '[[:space:]]' | sed 's!$! !' | tr "[a-z]" "[A-Z]"
+        if which ipmitool >/dev/null; then
+            ipmitool lan print 2>/dev/null | grep '^IP Address[[:space:]]\+:' |cut -d: -f2- | tr -d '[[:space:]]' | sed 's!$! !' | tr "[a-z]" "[A-Z]"
         fi
         echo
     fi
@@ -92,8 +95,8 @@ getMac() {
     else
         # Linux
 	LANG=C ifconfig -a | grep 'Link encap:Ethernet' | awk -F'HWaddr' '{ print $2 }' | sed 's/[[:space:]]//g' | tr "[a-z]" "[A-Z]" | tr "\n" " "
-        if [ -x `which ipmitool` ]; then
-            ipmitool lan print | grep '^MAC Address' |cut -d: -f2- | tr -d '[[:space:]]' | sed 's!$! !' | tr "[a-z]" "[A-Z]"
+        if which ipmitool >/dev/null; then
+            ipmitool lan print 2>/dev/null | grep '^MAC Address' |cut -d: -f2- | tr -d '[[:space:]]' | sed 's!$! !' | tr "[a-z]" "[A-Z]"
         fi
         echo
     fi
@@ -163,8 +166,15 @@ checkAction() {
 verifyValue() {
     case "${var}" in
         HOSTNAME)
+            mismatch=1
+            # Default Hostname
             hostname=`getHostname`
-            if ! `istrcompare "${value}" "${hostname}"`; then
+            if `istrcompare "${value}" "${hostname}"`; then mismatch=0; fi
+            # Short Hostname
+            shorthostname=`getShortHostname`
+            if `istrcompare "${value}" "${shorthostname}"`; then mismatch=0; fi
+            # Return
+            if [ ${mismatch} -eq 1 ]; then
                 echo "HOSTNAME MISMATCH: $hostname"
                 exit 1
             fi
