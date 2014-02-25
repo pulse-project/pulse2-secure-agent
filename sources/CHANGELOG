@@ -1,5 +1,19 @@
 This is the Pulse 2 Secure Agent Changelog
 
+pulse2-secure-agent (2.1.1)
+---------------------------
+  * Release on 2014-02-25
+  * Improve pulse2-client-check:
+    - Handle IPMI management interfaces MAC addresses
+    - Handle both short and FQDN hostname
+
+pulse2-secure-agent (2.1.0)
+---------------------------
+  * Release on 2013-11-14
+  * Based on latest Cygwin release.
+  * Include a lot of new binaries (ie: vim)
+  * Install Cygwin LSA helper to allow user context switching
+
 pulse2-secure-agent (2.0.3)
 ---------------------------
   * Released on 2013-06-04
