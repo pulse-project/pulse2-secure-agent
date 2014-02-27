@@ -31,10 +31,18 @@ isMacOS() {
 
 # Get computer's hostname
 getHostname() {
-    hostname -f | tr "[a-z]" "[A-Z]"
+    if isWindows; then
+        hostname | tr "[a-z]" "[A-Z]"
+    else
+        hostname -f | tr "[a-z]" "[A-Z]"
+    fi
 }
 getShortHostname() {
-    hostname -s | tr "[a-z]" "[A-Z]"
+    if isWindows; then
+        hostname | tr "[a-z]" "[A-Z]"
+    else
+        hostname -s | tr "[a-z]" "[A-Z]"
+    fi
 }
 
 # Case insensitive match
