@@ -30,18 +30,20 @@ isMacOS() {
 }
 
 # Get computer's hostname
+# Strip trailing spaces because Windows "hostname" command
+# return a \r, ONLY when run thru SSH, it works when run locally -_-'
 getHostname() {
     if isWindows; then
-        hostname | tr "[a-z]" "[A-Z]"
+        hostname | tr "[a-z]" "[A-Z]" | sed 's/[[:space:]]\+$//'
     else
-        hostname -f | tr "[a-z]" "[A-Z]"
+        hostname -f | tr "[a-z]" "[A-Z]" | sed 's/[[:space:]]\+$//'
     fi
 }
 getShortHostname() {
     if isWindows; then
-        hostname | tr "[a-z]" "[A-Z]"
+        hostname | tr "[a-z]" "[A-Z]" | sed 's/[[:space:]]\+$//'
     else
-        hostname -s | tr "[a-z]" "[A-Z]"
+        hostname -s | tr "[a-z]" "[A-Z]" | sed 's/[[:space:]]\+$//'
     fi
 }
 
