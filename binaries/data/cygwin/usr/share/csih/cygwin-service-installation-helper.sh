@@ -1,7 +1,7 @@
 #    --  #!/bin/bash  --
 # cygwin-service-installation-helper.sh
 #
-# Copyright (c) 2008 Charles S. Wilson, Corinna Vinschen,
+# Copyright (c) 2010-2013 Charles S. Wilson, Corinna Vinschen,
 #                    Pierre Humblett, and others listed in
 #                    AUTHORS
 # 
@@ -58,10 +58,13 @@
 #    csih_is_nt2003
 #    csih_is_vista
 #    csih_is_windows7
+#    csih_is_windows8
 #    csih_is_exactly_vista
 #    csih_is_exactly_server2008
 #    csih_is_exactly_windows7
+#    csih_is_exactly_windows8
 #    csih_is_exactly_server2008r2
+#    csih_is_exactly_server2012
 #    csih_version_ge
 #    csih_version_le
 #    csih_version_gt
@@ -71,19 +74,18 @@
 #    csih_check_program_or_warn
 #    csih_check_program_or_error
 #    csih_invoke_helper
+#    csih_call_winsys32
 #    csih_get_localized_account_name
 #    csih_get_guest_account_name
 #    csih_guest_account_active
 #    csih_install_config
 #    csih_make_dir
-#    csih_sanity_check
 #    csih_get_system_and_admins_ids
 #    csih_check_passwd_and_group
 #    csih_check_user
 #    csih_check_dir_perms
 #    csih_check_access
 #    csih_check_sys_mount
-#    csih_check_basic_mounts
 #    csih_privileged_accounts
 #    csih_privileged_account_exists
 #    csih_account_has_necessary_privileges
@@ -96,7 +98,10 @@
 #    csih_path_supports_acls
 #    csih_cygver
 #    csih_cygver_is_oneseven
+#    csih_cygwin_is_64bit
 #    csih_win_product_name
+#    csih_writable_tmpdir
+#    csih_mktemp
 #
 # DEBUG SUPPORT:
 #    csih_stacktrace
@@ -104,15 +109,43 @@
 #    csih_trace_off
 #
 # MUTABLE VARIABLES:
+#   csih_sanity_check_server
+#       if "yes", the initial sanity check will test for tools only used when
+#       installing a service.  As of the time of writing these are "cygrunsrv"
+#       and "editrights".
+#       This variable must be set in the calling installer script *before*
+#       sourcing cygwin-service-installation-helper.sh, otherwise it has no
+#       effect.
+#   csih_required_commands[]
+#       This variable, too, must be set in the calling installer script *before*
+#       sourcing cygwin-service-installation-helper.sh, otherwise it has no
+#       effect.
+#       An array which contains commands used by the calling installer script
+#       and the Cygwin package the command is part of.  The commands are tested
+#       for existence at startup.  If one or more commands don't exist or are
+#       not executable, cygwin-service-installation-helper.sh provides a helpful
+#       error message and refuses to run.
+#       The array has to be organized in pairs command/package.  The commands
+#       *shall* be given with full path, and the installer script *shall* use
+#       all external commands always with full paths as well to make sure the
+#       required commands are not clobbered by other commands with the same
+#       name due to the settings of $PATH.
+#       Here's an example how csih_required_commands should be declared in the
+#       calling installer script:
+#         declare -a csih_required_commands[]=(
+#           /usr/bin/ls     coreutils
+#           /usr/bin/passwd cygwin
+#           /usr/sbin/telnetd inteutils
+#         )
 #   csih_FORCE_PRIVILEGED_USER
-#	if "yes", then create a privileged user even on NT/2k/XP
+#	if "yes", then create a privileged user even on NT/2k/XP(32)
 #       where it is not required (on those versions, LocalSystem
 #	will do fine).
 #       Set by caller foo-config.
-#       NOTE: on NT/2k/XP, IF a well-known privileged user already
+#       NOTE: on NT/2k/XP(32), IF a well-known privileged user already
 #             exists and has all necessary capabilities, then it will
 #             be used regardless. This variable forces the creation
-#             and use of a privileged user, on NT/2k/XP, when one does
+#             and use of a privileged user, on NT/2k/XP(32), when one does
 #             not already exist.
 #   SYSCONFDIR
 #	default value = "/etc", or set by caller foo-config.
@@ -171,12 +204,11 @@
 #   csih_progname_base
 #
 # ======================================================================
-# Initial setup, default values, etc.
+# Initial setup, default values, etc.  PART 1
 # ======================================================================
 csih_progname=$0
-csih_progname_base=$(basename -- $csih_progname)
-csih_VERSION=0.9.1
-readonly csih_progname csih_progname_base csih_VERSION
+csih_VERSION=0.9.7
+readonly csih_progname csih_VERSION
 
 csih_auto_answer=""
 csih_value=
@@ -199,34 +231,7 @@ _csih_exec_dir=
 _csih_script_dir=
 
 _csih_trace=
-_csih_sys="`uname`"
-_csih_nt=`expr "${_csih_sys}" : "CYGWIN_NT"`
-_csih_2k=0
-_csih_xp=0
-_csih_nt2003=0
-_csih_vista=0
-_csih_windows7=0
-_csih_exactly_server2008=0
-_csih_exactly_server2008r2=0
-_csih_exactly_vista=0
-_csih_exactly_windows7=0
 _csih_win_product_name="unknown"
-
-# If running on NT, check if running under 2003 Server or later
-if [ ${_csih_nt} -gt 0 ]
-then
-    _csih_2k=`uname | awk -F- '{print ( $2 >= 5.0 ) ? 1 : 0;}'`
-    _csih_xp=`uname | awk -F- '{print ( $2 >= 5.1 ) ? 1 : 0;}'`
-    _csih_nt2003=`uname | awk -F- '{print ( $2 >= 5.2 ) ? 1 : 0;}'`
-    _csih_vista=`uname | awk -F- '{print ( $2 >= 6.0 ) ? 1 : 0;}'`
-    _csih_windows7=`uname | awk -F- '{print ( $2 >= 6.1 ) ? 1 : 0;}'`
-fi
-readonly _csih_sys _csih_nt _csih_2k _csih_xp _csih_nt2003 _csih_vista
-
-_csih_cygver="1.7.0"
-_csih_cygver_is_oneseven=`echo ${_csih_cygver} | awk -F. '{print ( $1 > 1 || ($1 == 1 && $2 >= 7) ) ? 1 : 0;}'`
-readonly _csih_cygver _csih_cygver_is_oneseven
-
 
 if [ -z "${SYSCONFDIR}" ]
 then 
@@ -241,6 +246,7 @@ fi
 _csih_all_preexisting_privileged_accounts=
 _csih_preferred_preexisting_privileged_account=
 _csih_setup_already_called=0
+_csih_writable_tmpdir_cache_value=
 _csih_version_parse_pkg_major=
 _csih_version_parse_pkg_minor=
 _csih_version_parse_pkg_micro=
@@ -356,179 +362,6 @@ csih_trace_off()
 } # === End of csih_trace_off() === #
 readonly -f csih_trace_off
 
-
-# ======================================================================
-# Routine: csih_is_nt
-#   returns 0 (true) if the system is Windows NT or above
-#   returns 1 (false) otherwise
-# ======================================================================
-csih_is_nt()
-{
-  csih_stacktrace "${@}"
-  $_csih_trace
-  test ${_csih_nt} -gt 0
-} # === End of csih_is_nt() === #
-readonly -f csih_is_nt
-# ======================================================================
-# Routine: csih_is_2k
-#   returns 0 (true) if the system is Windows 2000 or above
-#   returns 1 (false) otherwise
-# ======================================================================
-csih_is_2k()
-{
-  csih_stacktrace "${@}"
-  $_csih_trace
-  test ${_csih_2k} -gt 0
-} # === End of csih_is_2k() === #
-readonly -f csih_is_2k
-# ======================================================================
-# Routine: csih_is_xp
-#   returns 0 (true) if the system is Windows XP or above
-#   returns 1 (false) otherwise
-# ======================================================================
-csih_is_xp()
-{
-  csih_stacktrace "${@}"
-  $_csih_trace
-  test ${_csih_xp} -gt 0
-} # === End of csih_is_xp() === #
-readonly -f csih_is_xp
-# ======================================================================
-# Routine: csih_is_nt2003
-#   returns 0 (true) if the system is Windows Server 2003 or above
-#   returns 1 (false) otherwise
-# ======================================================================
-csih_is_nt2003()
-{
-  csih_stacktrace "${@}"
-  $_csih_trace
-  test ${_csih_nt2003} -gt 0
-} # === End of csih_is_nt2003() === #
-readonly -f csih_is_nt2003
-# ======================================================================
-# Routine: csih_is_vista
-#   returns 0 (true) if the system is Windows Vista/Windows Server 2008
-#   or above.
-#   returns 1 (false) otherwise
-# ======================================================================
-csih_is_vista()
-{
-  csih_stacktrace "${@}"
-  $_csih_trace
-  test ${_csih_vista} -gt 0
-} # === End of csih_is_vista() === #
-readonly -f csih_is_vista
-# ======================================================================
-# Routine: csih_is_windows7
-#   returns 0 (true) if the system is Windows 7/Windows Server 2008r2
-#   or above.
-#   returns 1 (false) otherwise
-# ======================================================================
-csih_is_windows7()
-{
-  csih_stacktrace "${@}"
-  $_csih_trace
-  test ${_csih_windows7} -gt 0
-} # === End of csih_is_windows7() === #
-readonly -f csih_is_windows7
-# ======================================================================
-# Routine: csih_cygver
-#   returns the dotted-triple version number of the currently-running
-#      cygwin dll. Avoids forking uname multiple times.
-# ======================================================================
-csih_cygver()
-{
-  csih_stacktrace "${@}"
-  $_csih_trace
-  echo $_csih_cygver
-} # === End of csih_cygver() === #
-readonly -f csih_cygver
-# ======================================================================
-# Routine: csih_cygver_is_oneseven
-#   returns 0 (true) if the currently-running cygwin dll is version
-#      1.7.0 or above (including pre-release betas).
-#   returns 1 (false) otherwise
-# ======================================================================
-csih_cygver_is_oneseven()
-{
-  csih_stacktrace "${@}"
-  $_csih_trace
-  test ${_csih_cygver_is_oneseven} -gt 0 
-} # === End of csih_cygver_is_oneseven() === #
-readonly -f csih_cygver_is_oneseven
-# ======================================================================
-# Routine: csih_is_exactly_vista
-#   returns 0 (true) if the system is one of the variants of
-#      Windows Vista (Home Basic, Home Premium, Business, etc) but NOT
-#      Server2008 or some newer edition (like Windows7)
-#   returns 1 (false) otherwise
-# ======================================================================
-csih_is_exactly_vista()
-{
-  csih_stacktrace "${@}"
-  $_csih_trace
-  test ${_csih_exactly_vista} -gt 0
-} # === End of csih_is_exactly_vista() === #
-#NOTE: do not make _csih_exactly_vista readonly YET
-
-# ======================================================================
-# Routine: csih_is_exactly_server2008
-#   returns 0 (true) if the system is one of the variants of
-#      Windows Server 2008 but NOT one of the variants of Vista, nor
-#      some newer edition (like Windows7)
-#   returns 1 (false) otherwise
-# ======================================================================
-csih_is_exactly_server2008()
-{
-  csih_stacktrace "${@}"
-  $_csih_trace
-  test ${_csih_exactly_server2008} -gt 0
-} # === End of csih_is_exactly_server2008() === #
-#NOTE: do not make _csih_exactly_server2008 readonly YET
-
-# ======================================================================
-# Routine: csih_is_exactly_windows7
-#   returns 0 (true) if the system is one of the variants of
-#      Windows 7 (Home Premium, Professional, etc) but NOT Server2008R2
-#      or some newer edition (like Windows8, or whatever Microsoft
-#      Marketing has decided to call it).
-#   returns 1 (false) otherwise
-# ======================================================================
-csih_is_exactly_windows7()
-{
-  csih_stacktrace "${@}"
-  $_csih_trace
-  test ${_csih_exactly_windows7} -gt 0
-} # === End of csih_is_exactly_windows7() === #
-#NOTE: do not make _csih_exactly_windows7 readonly YET
-
-# ======================================================================
-# Routine: csih_is_exactly_server2008r2
-#   returns 0 (true) if the system is one of the variants of
-#      Windows Server 2008 R2 but NOT one of the variants of Windows7,
-#      nor some newer edition.
-#   returns 1 (false) otherwise
-# ======================================================================
-csih_is_exactly_server2008r2()
-{
-  csih_stacktrace "${@}"
-  $_csih_trace
-  test ${_csih_exactly_server2008r2} -gt 0
-} # === End of csih_is_exactly_server2008r2() === #
-#NOTE: do not make _csih_exactly_server2008r2 readonly YET
-
-# ======================================================================
-# Routine: csih_win_product_name
-#   Allows to cache the result of calling winProductName.
-# ======================================================================
-csih_win_product_name()
-{
-  csih_stacktrace "${@}"
-  $_csih_trace
-  echo $_csih_win_product_name
-} # === End of csih_win_product_name() === #
-#NOTE: do not make _csih_win_product_name readonly YET
-
 # ======================================================================
 # Routine: csih_error
 #   Prints the (optional) error message $1, then
@@ -564,7 +397,7 @@ readonly -f csih_error
 # ======================================================================
 csih_error_multi()
 {
-  local errrorcode=$?
+  local errorcode=$?
   set +x # don't trace this, but we are interested in who called
   csih_stacktrace # we'll see the arguments in the next statement
   if ((errorcode == 0))
@@ -631,7 +464,7 @@ readonly -f csih_inform
 #   prints the supplied command line
 #   executes it
 #   returns the error status of the command
-# Example: csih_verbose rm -f /etc/config-file
+# Example: csih_verbose /usr/bin/rm -f /etc/config-file
 # ======================================================================
 csih_verbose()
 {
@@ -647,6 +480,555 @@ csih_verbose()
 readonly -f csih_verbose
 
 # ======================================================================
+# Routine: csih_check_program
+#   Check to see that the specified program(s) ($1, $2, ...) are installed 
+#   and executable by this script.  Returns as soon as it encounters a
+#   missing or non-executable program.  Returns 1 if it can't find the
+#   program, 2 if it's not executable.
+# ======================================================================
+csih_check_program()
+{
+  csih_stacktrace "${@}"
+  $_csih_trace
+  local prog
+  local fullpath
+
+  for prog
+  do
+    # To maintain backward compatibility, check if hash can find programs
+    # which are not given with full path.
+    if ! [[ "${prog}" =~ ^/ ]]
+    then
+      hash "${prog}" 2>/dev/null || return 1
+      prog="$(hash -t "${prog}")"
+    fi
+    test -e ${prog} || return 1
+    test -x ${prog} || return 2
+  done
+
+  return 0;
+} # === End of csih_check_program() === #
+readonly -f csih_check_program
+
+# ======================================================================
+# Routine: csih_check_program_or_warn
+#   Check to see that a specified program ($1) is installed and executable
+#   by this script.  If not, warn the user that a particular package
+#   ($2) is required and return non-zero (false)
+#   Otherwise, return 0 (true)
+# ======================================================================
+csih_check_program_or_warn()
+{
+  csih_stacktrace "${@}"
+  $_csih_trace
+  local prog=${1};
+  local pkg=${2:-${1}};
+
+  csih_check_program "${prog}"
+  case $? in
+  0)
+    return 0
+    ;;
+  1)
+    csih_warning "Cannot find required command $prog."
+    ;;
+  2)
+    csih_warning "Cannot execute required program $prog."
+    ;;
+  esac
+  csih_warning "Please (re)install the ${pkg} package.";
+  return 1;
+} # === End of csih_check_program_or_warn() === #
+readonly -f csih_check_program_or_warn
+
+# ======================================================================
+# Routine: csih_check_program_or_error
+#   Check to see that a specified program ($1) is installed and executable
+#   by this script.  If not, inform the user that a particular package
+#   ($2) is required, and exit with error
+# ======================================================================
+csih_check_program_or_error()
+{
+  csih_stacktrace "${@}"
+  $_csih_trace
+  local prog=${1};
+  local pkg=${2:-${1}};
+
+  csih_check_program "${prog}"
+  case $? in
+  0)
+    return 0
+    ;;
+  1)
+    csih_error_recoverable "Cannot find required command $prog."
+    ;;
+  2)
+    csih_error_recoverable "Cannot execute required program $prog."
+    ;;
+  esac
+  csih_error "Please (re)install the ${pkg} package.";
+  return 1;
+} # === End of csih_check_program_or_error() === #
+readonly -f csih_check_program_or_error
+
+# ======================================================================
+# Routine: _csih_sanity_check
+#   Check for the set of programs that are used by this script.
+#   Exits on failure
+# ======================================================================
+_csih_sanity_check()
+{
+  csih_stacktrace "${@}"
+  $_csih_trace
+  local ret=0
+  # Check for programs that this script uses.
+  local -a cmd=(
+    /usr/bin/awk gawk
+    /usr/bin/basename coreutils
+    /usr/bin/chmod coreutils
+    /usr/bin/cat coreutils
+    /usr/bin/chown coreutils
+    /usr/bin/cp coreutils
+    /usr/bin/cut coreutils
+    /usr/bin/cygpath cygwin
+    /usr/bin/dirname coreutils
+    /usr/bin/expr coreutils
+    /usr/bin/getfacl cygwin
+    /usr/bin/grep grep
+    /usr/bin/id coreutils
+    /usr/bin/ls coreutils
+    /usr/bin/mkdir coreutils
+    /usr/bin/mkgroup cygwin
+    /usr/bin/mkpasswd cygwin
+    /usr/bin/mktemp coreutils 
+    /usr/bin/mount cygwin
+    /usr/bin/mv cygwin
+    /usr/bin/rm coreutils
+    /usr/bin/sed sed
+    /usr/bin/setfacl cygwin
+    /usr/bin/stat coreutils
+    /usr/bin/tr coreutils
+    /usr/bin/uname coreutils
+    # do not check for editrights and cygrunsrv here -- clients which use this
+    # library may not need their functionality.  See below for the function
+    # csih_sanity_check_server which can be called by the main script to test
+    # for these commands.
+  )
+  for (( i=0; i < ${#cmd[*]}; i+=2 ))
+  do
+    csih_check_program_or_warn "${cmd[i]}" "${cmd[i+1]}" || ret=1
+  done
+  if [ "${csih_sanity_check_server}" = "yes" \
+       -o "${csih_sanity_check_server}" = "1" ]
+  then
+    csih_check_program_or_warn /usr/bin/cygrunsrv cygrunsrv || ret=1
+    csih_check_program_or_warn /usr/bin/editrights editrights || ret=1
+  fi
+  # The calling script may add commands which should be checked.
+  # It can do so by defining an array called 'csih_required_commands'.
+  # It must consist of pairs command/package, just like the above 'cmd' array.
+  for (( i=0; i < ${#csih_required_commands[*]}; i+=2 ))
+  do
+    if ! [[ "${cmd[@]}" =~ "${csih_required_commands[i]}" ]]
+    then
+      csih_check_program_or_warn "${csih_required_commands[i]}" "${csih_required_commands[i+1]}" || ret=1
+    fi
+  done
+  if [ $ret -ne 0 ]
+  then
+    csih_error_multi \
+      "There is something badly wrong with your cygwin installation." \
+      "" \
+      "Please install the missing command(s), and make sure all required" \
+      "command are executable.  Otherwise the installation provided by this" \
+      "script will fail." \
+      "" \
+      "To fix this problem, run {rh}setup.exe and (re)install the" \
+      "packages mentioned in the warnings above."
+  fi
+} # === End of _csih_sanity_check() === #
+readonly -f _csih_sanity_check
+
+# ======================================================================
+# DEPRECATED: csih_sanity_check
+#   Stub for backward compatibility
+# ======================================================================
+function csih_sanity_check()
+{
+  csih_warning "$csih_progname_base is using deprecated "\
+    "function csih_sanity_check. Continuing..."
+  true
+} # === End of csih_sanity_check() === #
+readonly -f csih_sanity_check
+
+# ======================================================================
+# Initial setup, default values, etc.  PART 2
+#
+# This part of the setup has to be deferred since first we have to make
+# sure that all required tools are available.  This makes for a bit of
+# mess as far as the order of function definitions goes, but since the
+# file is sourced, we have to make sure that certain tests are running
+# first, especially the test for missing commands used by this script.
+#
+# Consequentially the call to _csih_sanity_check is done first.
+# ======================================================================
+_csih_sanity_check
+
+csih_progname_base=$(/usr/bin/basename -- $csih_progname)
+readonly csih_progname_base
+_csih_sys="$(/usr/bin/uname)"
+_csih_nt=$(/usr/bin/expr "${_csih_sys}" : "CYGWIN_NT")
+_csih_2k=0
+_csih_xp=0
+_csih_nt2003=0
+_csih_vista=0
+_csih_windows7=0
+_csih_windows8=0
+_csih_exactly_server2008=0
+_csih_exactly_server2008r2=0
+_csih_exactly_server2012=0
+_csih_exactly_vista=0
+_csih_exactly_windows7=0
+_csih_exactly_windows8=0
+# If running on NT, check if running under XP(64), 2003 Server, or later
+if [ ${_csih_nt} -gt 0 ]
+then
+    _csih_2k=$(/usr/bin/uname | /usr/bin/awk -F- '{print ( $2 >= 5.0 ) ? 1 : 0;}')
+    _csih_xp=$(/usr/bin/uname | /usr/bin/awk -F- '{print ( $2 >= 5.1 ) ? 1 : 0;}')
+    _csih_nt2003=$(/usr/bin/uname | /usr/bin/awk -F- '{print ( $2 >= 5.2 ) ? 1 : 0;}') # also true for XP(64)
+    _csih_vista=$(/usr/bin/uname | /usr/bin/awk -F- '{print ( $2 >= 6.0 ) ? 1 : 0;}')
+    _csih_windows7=$(/usr/bin/uname | /usr/bin/awk -F- '{print ( $2 >= 6.1 ) ? 1 : 0;}')
+    _csih_windows8=$(/usr/bin/uname | /usr/bin/awk -F- '{print ( $2 >= 6.2 ) ? 1 : 0;}')
+fi
+readonly _csih_sys _csih_nt _csih_2k _csih_xp _csih_nt2003 _csih_vista _csih_windows7 _csih_windows8
+_csih_cygver="1.7.0"
+_csih_cygver_is_oneseven=$(echo ${_csih_cygver} | /usr/bin/awk -F. '{print ( $1 > 1 || ($1 == 1 && $2 >= 7) ) ? 1 : 0;}')
+_csih_cygwin_is_64bit=$(/usr/bin/uname -m | grep 'x86_64' >/dev/null && echo 1 || echo 0)
+readonly _csih_cygver _csih_cygver_is_oneseven _csih_cygwin_is_64bit
+
+# ======================================================================
+# Routine: csih_is_nt
+#   returns 0 (true) if the system is Windows NT or above
+#   returns 1 (false) otherwise
+# ======================================================================
+csih_is_nt()
+{
+  csih_stacktrace "${@}"
+  $_csih_trace
+  test ${_csih_nt} -gt 0
+} # === End of csih_is_nt() === #
+readonly -f csih_is_nt
+# ======================================================================
+# Routine: csih_is_2k
+#   returns 0 (true) if the system is Windows 2000 or above
+#   returns 1 (false) otherwise
+# ======================================================================
+csih_is_2k()
+{
+  csih_stacktrace "${@}"
+  $_csih_trace
+  test ${_csih_2k} -gt 0
+} # === End of csih_is_2k() === #
+readonly -f csih_is_2k
+# ======================================================================
+# Routine: csih_is_xp
+#   returns 0 (true) if the system is Windows XP or above
+#   returns 1 (false) otherwise
+# ======================================================================
+csih_is_xp()
+{
+  csih_stacktrace "${@}"
+  $_csih_trace
+  test ${_csih_xp} -gt 0
+} # === End of csih_is_xp() === #
+readonly -f csih_is_xp
+# ======================================================================
+# Routine: csih_is_nt2003
+#   returns 0 (true) if the system is Windows XP 64bit, or Windows
+#                    Server 2003 or above.
+#   returns 1 (false) otherwise
+#
+# Note that this routine is somewhat misnamed, since it returns true for
+# 64bit Windows XP, but not 32bit Windows XP, as well as the nominal
+# "NT Server 2003 and above" operating systems. This is because 64bit XP
+# was developed by Microsoft after the release of the 32bit version, and
+# unlike the older 32bit XP, the 64bit XP uses the same kernel as the
+# (then also under development) Windows Server 2003.  The key point is
+# that all Windows operating systems with kernel >= 5.2 (e.g. 64bit
+# Windows XP, Windows NT Server 2003, and above) share the same
+# restriction with regards to the capabilities of the SYSTEM
+# (LocalSystem) account: on those platforms, SYSTEM cannot change the
+# effective user.  This is a key capability for services, and many
+# 'foo-config' clients use csih_is_nt2003 to check whether a special
+# "privileged" user must be created, as do several csih_* functions
+# such as csih_select_privileged_username().
+# ======================================================================
+csih_is_nt2003()
+{
+  csih_stacktrace "${@}"
+  $_csih_trace
+  test ${_csih_nt2003} -gt 0
+} # === End of csih_is_nt2003() === #
+readonly -f csih_is_nt2003
+# ======================================================================
+# Routine: csih_is_vista
+#   returns 0 (true) if the system is Windows Vista/Windows Server 2008
+#   or above.
+#   returns 1 (false) otherwise
+# ======================================================================
+csih_is_vista()
+{
+  csih_stacktrace "${@}"
+  $_csih_trace
+  test ${_csih_vista} -gt 0
+} # === End of csih_is_vista() === #
+readonly -f csih_is_vista
+# ======================================================================
+# Routine: csih_is_windows7
+#   returns 0 (true) if the system is Windows 7/Windows Server 2008r2
+#   or above.
+#   returns 1 (false) otherwise
+# ======================================================================
+csih_is_windows7()
+{
+  csih_stacktrace "${@}"
+  $_csih_trace
+  test ${_csih_windows7} -gt 0
+} # === End of csih_is_windows7() === #
+readonly -f csih_is_windows7
+# ======================================================================
+# Routine: csih_is_windows8
+#   returns 0 (true) if the system is Windows 8/Windows 8 Server
+#   or above.
+#   returns 1 (false) otherwise
+# ======================================================================
+csih_is_windows8()
+{
+  csih_stacktrace "${@}"
+  $_csih_trace
+  test ${_csih_windows8} -gt 0
+} # === End of csih_is_windows8() === #
+readonly -f csih_is_windows8
+# ======================================================================
+# Routine: csih_cygver
+#   returns the dotted-triple version number of the currently-running
+#      cygwin dll. Avoids forking uname multiple times.
+# ======================================================================
+csih_cygver()
+{
+  csih_stacktrace "${@}"
+  $_csih_trace
+  echo $_csih_cygver
+} # === End of csih_cygver() === #
+readonly -f csih_cygver
+# ======================================================================
+# Routine: csih_cygver_is_oneseven
+#   returns 0 (true) if the currently-running cygwin dll is version
+#      1.7.0 or above (including pre-release betas).
+#   returns 1 (false) otherwise
+# ======================================================================
+csih_cygver_is_oneseven()
+{
+  csih_stacktrace "${@}"
+  $_csih_trace
+  test ${_csih_cygver_is_oneseven} -gt 0 
+} # === End of csih_cygver_is_oneseven() === #
+readonly -f csih_cygver_is_oneseven
+# ======================================================================
+# Routine: csih_cygwin_is_64bit
+#   returns 0 (true) if the currently-running cygwin dll is 64bit
+#   returns 1 (false) otherwise
+# ======================================================================
+csih_cygwin_is_64bit()
+{
+  csih_stacktrace "${@}"
+  $_csih_trace
+  test ${_csih_cygwin_is_64bit} -gt 0 
+} # === End of csih_cygwin_is_64bit() === #
+readonly -f csih_cygwin_is_64bit
+# ======================================================================
+# Routine: csih_is_exactly_vista
+#   returns 0 (true) if the system is one of the variants of
+#      Windows Vista (Home Basic, Home Premium, Business, etc) but NOT
+#      Server2008 or some newer edition (like Windows7)
+#   returns 1 (false) otherwise
+# ======================================================================
+csih_is_exactly_vista()
+{
+  csih_stacktrace "${@}"
+  $_csih_trace
+  test ${_csih_exactly_vista} -gt 0
+} # === End of csih_is_exactly_vista() === #
+#NOTE: do not make _csih_exactly_vista readonly YET
+
+# ======================================================================
+# Routine: csih_is_exactly_server2008
+#   returns 0 (true) if the system is one of the variants of
+#      Windows Server 2008 but NOT one of the variants of Vista, nor
+#      some newer edition (like Windows7)
+#   returns 1 (false) otherwise
+# ======================================================================
+csih_is_exactly_server2008()
+{
+  csih_stacktrace "${@}"
+  $_csih_trace
+  test ${_csih_exactly_server2008} -gt 0
+} # === End of csih_is_exactly_server2008() === #
+#NOTE: do not make _csih_exactly_server2008 readonly YET
+
+# ======================================================================
+# Routine: csih_is_exactly_windows7
+#   returns 0 (true) if the system is one of the variants of
+#      Windows 7 (Home Premium, Professional, etc) but NOT Server2008R2
+#      or some newer edition like Windows 8.
+#   returns 1 (false) otherwise
+# ======================================================================
+csih_is_exactly_windows7()
+{
+  csih_stacktrace "${@}"
+  $_csih_trace
+  test ${_csih_exactly_windows7} -gt 0
+} # === End of csih_is_exactly_windows7() === #
+#NOTE: do not make _csih_exactly_windows7 readonly YET
+
+# ======================================================================
+# Routine: csih_is_exactly_server2008r2
+#   returns 0 (true) if the system is one of the variants of
+#      Windows Server 2008 R2 but NOT one of the variants of Windows7,
+#      nor some newer edition.
+#   returns 1 (false) otherwise
+# ======================================================================
+csih_is_exactly_server2008r2()
+{
+  csih_stacktrace "${@}"
+  $_csih_trace
+  test ${_csih_exactly_server2008r2} -gt 0
+} # === End of csih_is_exactly_server2008r2() === #
+#NOTE: do not make _csih_exactly_server2008r2 readonly YET
+
+# ======================================================================
+# Routine: csih_is_exactly_windows8
+#   returns 0 (true) if the system is one of the variants of
+#      Windows 8 (Home Premium, Professional, etc) but NOT
+#      Windows 8 Server or some newer edition (like Windows9, or
+#      whatever Microsoft Marketing has decided to call it).
+#   returns 1 (false) otherwise
+# ======================================================================
+csih_is_exactly_windows8()
+{
+  csih_stacktrace "${@}"
+  $_csih_trace
+  test ${_csih_exactly_windows8} -gt 0
+} # === End of csih_is_exactly_windows8() === #
+#NOTE: do not make _csih_exactly_windows8 readonly YET
+
+# ======================================================================
+# Routine: csih_is_exactly_server2012
+#   returns 0 (true) if the system is one of the variants of
+#      Windows 2012 Server but NOT one of the variants of Windows 8,
+#      nor some newer edition.
+#   returns 1 (false) otherwise
+# ======================================================================
+csih_is_exactly_server2012()
+{
+  csih_stacktrace "${@}"
+  $_csih_trace
+  test ${_csih_exactly_server2012} -gt 0
+} # === End of csih_is_exactly_server2012() === #
+#NOTE: do not make _csih_exactly_server2012 readonly YET
+
+# ======================================================================
+# Routine: csih_win_product_name
+#   Allows to cache the result of calling winProductName.
+# ======================================================================
+csih_win_product_name()
+{
+  csih_stacktrace "${@}"
+  $_csih_trace
+  echo $_csih_win_product_name
+} # === End of csih_win_product_name() === #
+#NOTE: do not make _csih_win_product_name readonly YET
+
+# ======================================================================
+# Routine: csih_writable_tmpdir
+#   Echos to stdout the name of a writable temporary directory, based
+#   on the values of $TMP, $TEMP, $TMPDIR, or $HOME, with a fallback to
+#   /tmp.  As a last resort, attempts to create /tmp.
+# 
+#   Returns 0 on success, nonzero on error.
+# ======================================================================
+csih_writable_tmpdir()
+{
+  csih_stacktrace "${@}"
+  $_csih_trace
+  local tdir
+
+  if [ -z "${_csih_writable_tmpdir_cache_value}" ]
+  then
+    if [ -n "${TMP}" -a -d "${TMP}" -a -w "${TMP}" ]
+    then
+      tdir="${TMP}"
+    elif [ -n "${TEMP}" -a -d "${TEMP}" -a -w "${TEMP}" ]
+    then
+      tdir="${TEMP}"
+    elif [ -n "${TMPDIR}" -a -d "${TMPDIR}" -a -w "${TMPDIR}" ]
+    then
+      tdir="${TMPDIR}"
+    elif [ -d "/tmp" -a -w "/tmp" ]
+    then
+      tdir="/tmp"
+    elif [ -n "${HOME}" -a -d "${HOME}" -a -w "${HOME}" ]
+    then
+      tdir="${HOME}"
+    else
+      # fall back to creating /tmp manually
+      /usr/bin/mkdir -p -m 1777 /tmp
+      if [ $? -eq 0 ]
+      then
+        tdir="/tmp"
+      else
+        csih_warning "Cannot find or create a writable temporary directory"
+        return 1
+      fi
+    fi
+    _csih_writable_tmpdir_cache_value="${tdir}"
+  fi
+  echo "${_csih_writable_tmpdir_cache_value}"
+} # === End of csih_writable_tmpdir() === #
+readonly -f csih_writable_tmpdir
+
+# ======================================================================
+# Routine: csih_mktemp
+#   Safe wrapper around mktemp.  Should be called in a subshell in order
+#   to capture the name of the created file: tmpfile="$(csih_mktemp)"
+#   By default, mktemp is invoked with
+#   --tmpfile="$(csih_writable_tmpdir)"
+#   but that may be overridden by explictly specifying a different
+#   --tmpdir value.
+#
+#   Return value is 0 on success, nonzero otherwise.
+# ======================================================================
+csih_mktemp ()
+{
+  csih_stacktrace "${@}"
+  $_csih_trace
+
+  local __umask=$(umask)
+  local rval
+  local tmpdir
+  
+  tmpdir=$(csih_writable_tmpdir) || return 1
+
+  umask 0077
+  /usr/bin/mktemp --tmpdir="${tmpdir}" "$@"
+  rval=$?
+  umask ${__umask}
+
+  return $rval
+} # === End of csih_mktemp() === #
+readonly -f csih_mktemp
+
+# ======================================================================
 # Routine: csih_version_parse
 #   safely parses a version string of the form x.y.z into three 
 #   separate values.
@@ -655,13 +1037,14 @@ csih_version_parse() {
   local pkg_version="$1"
 
   # remove any non-digit characters from the version numbers to permit numeric
-  _csih_version_parse_pkg_major=`echo $pkg_version | cut -d. -f1 | sed s/[a-zA-Z\-].*//g`
-  _csih_version_parse_pkg_minor=`echo $pkg_version | cut -d. -f2 | sed s/[a-zA-Z\-].*//g`
-  _csih_version_parse_pkg_micro=`echo $pkg_version | cut -d. -f3 | sed s/[a-zA-Z\-].*//g`
+  _csih_version_parse_pkg_major=$(echo $pkg_version | /usr/bin/cut -d. -f1 | /usr/bin/sed s/[a-zA-Z\-].*//g)
+  _csih_version_parse_pkg_minor=$(echo $pkg_version | /usr/bin/cut -d. -f2 | /usr/bin/sed s/[a-zA-Z\-].*//g)
+  _csih_version_parse_pkg_micro=$(echo $pkg_version | /usr/bin/cut -d. -f3 | /usr/bin/sed s/[a-zA-Z\-].*//g)
   test -z "$_csih_version_parse_pkg_major" && _csih_version_parse_pkg_major=0
   test -z "$_csih_version_parse_pkg_minor" && _csih_version_parse_pkg_minor=0
   test -z "$_csih_version_parse_pkg_micro" && _csih_version_parse_pkg_micro=0
-}
+} # === End of csih_version_parse() === #
+readonly -f csih_version_parse
 
 # ======================================================================
 # Routine: csih_version_ge
@@ -972,53 +1355,17 @@ csih_get_cygenv()
 } # === End of csih_get_cygenv() === #
 readonly -f csih_get_cygenv
 
-
-# ======================================================================
-# Routine: csih_check_program
-#   Check to see that a specified program(s) ($1, $2, ...) are installed 
-#   and executable by this script.
-# ======================================================================
-csih_check_program()
-{
-  csih_stacktrace "${@}"
-  $_csih_trace
-  local prog
-  local fullpath
-
-  for prog
-  do
-    if ! hash ${prog} &> /dev/null
-    then
-      return 1;
-    else
-      # file exists in PATH, but if it was not executable then
-      # hash didn't actually store its value.  Check again...
-      fullpath=$(hash -t ${prog} 2>/dev/null)
-      if [ -z "${fullpath}" ]
-      then
-        # not executable
-        return 1;
-      fi
-    fi 
-  done
-
-  return 0;
-} # === End of csih_check_program() === #
-readonly -f csih_check_program
-
 # ======================================================================
 # Routine: _csih_get_script_dir
 #   private routine to initialize _csih_script_dir
 # ======================================================================
 _csih_get_script_dir() {
   # should be /usr/share/csih
-  local d=$(dirname -- ${BASH_SOURCE[0]})
+  local d=$(/usr/bin/dirname -- ${BASH_SOURCE[0]})
   local D=$(cd "$d" && pwd)
   echo "$D"
 } # === End of csih_get_script_dir() === #
 readonly -f _csih_get_script_dir
-_csih_script_dir=$(_csih_get_script_dir)
-readonly _csih_script_dir
 
 # ======================================================================
 # Routine: _csih_get_exec_dir
@@ -1026,8 +1373,8 @@ readonly _csih_script_dir
 # ======================================================================
 _csih_get_exec_dir() {
   # should be /usr/lib/csih
-  local d=$(dirname -- ${BASH_SOURCE[0]})
-  local b=$(basename -- "$d")
+  local d=$(/usr/bin/dirname -- ${BASH_SOURCE[0]})
+  local b=$(/usr/bin/basename -- "$d")
   local D=$(cd "$d/../../lib/$b" >/dev/null 2>&1 && pwd)
   local fullpath=
   D=/lib/csih
@@ -1039,11 +1386,11 @@ _csih_get_exec_dir() {
       D=/usr/lib/csih
     else
       # try $PATH
-      if csih_check_program getAccountName
+      if hash getAccountName 2>/dev/null
       then
         hash ${prog} 2>/dev/null
         fullpath=$(hash -t getAccountName 2>/dev/null)
-        D=$(dirname -- "$fullpath") 
+        D=$(/usr/bin/dirname -- "$fullpath") 
       else
         csih_error_recoverable "Could not locate csih helper programs!"
       fi
@@ -1052,55 +1399,6 @@ _csih_get_exec_dir() {
   echo "$D"
 } # === End of csih_get_exec_dir() === #
 readonly -f _csih_get_exec_dir
-_csih_exec_dir=$(_csih_get_exec_dir)
-readonly _csih_exec_dir
-
-# ======================================================================
-# Routine: csih_check_program_or_warn
-#   Check to see that a specified program ($1) is installed and executable
-#   by this script.  If not, warn the user that a particular package
-#   ($2) is required and return non-zero (false)
-#   Otherwise, return 0 (true)
-# ======================================================================
-csih_check_program_or_warn()
-{
-  csih_stacktrace "${@}"
-  $_csih_trace
-  local prog=${1};
-  local pkg=${2:-${1}};
-
-  if ! csih_check_program "${prog}"
-  then
-    csih_warning "Could not find or execute required program $prog."
-    csih_warning "Please install ${pkg}";
-  fi
-
-  return 0;
-} # === End of csih_check_program_or_warn() === #
-readonly -f csih_check_program_or_warn
-
-# ======================================================================
-# Routine: csih_check_program_or_error
-#   Check to see that a specified program ($1) is installed and executable
-#   by this script.  If not, inform the user that a particular package
-#   ($2) is required, and exit with error
-# ======================================================================
-csih_check_program_or_error()
-{
-  csih_stacktrace "${@}"
-  $_csih_trace
-  local prog=${1};
-  local pkg=${2:-${1}};
-
-  if ! csih_check_program "${prog}"
-  then
-    csih_error_multi "Could not find or execute required program $prog." \
-                     "Please install ${pkg}";
-  fi
-
-  return 0;
-} # === End of csih_check_program_or_error() === #
-readonly -f csih_check_program_or_error
 
 # ======================================================================
 # Routine: csih_invoke_helper
@@ -1144,11 +1442,11 @@ csih_invoke_helper()
       result=${result%$'\n'${SEP}*}
       result=${result#*${SEP}$'\n'}
       if [ -n "${var_err}" ]; then
-        csih_helper_stderr=$(echo "$var_err" | sed -e 's/\r//g')
+        csih_helper_stderr=$(echo "$var_err" | /usr/bin/sed -e 's/\r//g')
         csih_error_recoverable "${helper}: ${csih_helper_stderr//\\/\\\\}" 1>&2
       fi
       if [ -n "${var_out}" ]; then
-        csih_helper_stdout=$(echo "$var_out" | sed -e 's/\r//g')
+        csih_helper_stdout=$(echo "$var_out" | /usr/bin/sed -e 's/\r//g')
         echo "${csih_helper_stdout}"
       fi
     else
@@ -1164,36 +1462,27 @@ csih_invoke_helper()
 readonly -f csih_invoke_helper
 
 # ======================================================================
-# Routine: csih_sanity_check
-#   Check for the set of programs that are used by this script.
-#   Returns 0 on success, non-zero on failure
+# Routine: csih_call_winsys32
+#   Calls a Windows CLI tool ($1) from the /Windows/System32 
+#   directory.  The trick here is that we use a full path to call
+#   the tool to avoid clobbering by other commands with the same name
+#   earlier in $PATH.  In addition, to avoid a problem where different
+#   versions of Windows spell the 'system32' directory with different
+#   capitalization, AND because we are not sure if the ${SYSTEMROOT}
+#   volume is case-sensitive, we exploit a loophole in cygwin's case-
+#   sensitive support.  When a command is invoked via a full, DOS-style
+#   path, case-insensitive path traversal is used.  Note that
+#   'cygpath -m' is used rather than 'cygpath -d' to avoid the
+#   "MS-DOS style path detected" warning.
 # ======================================================================
-csih_sanity_check()
+csih_call_winsys32()
 {
-  csih_stacktrace "${@}"
-  $_csih_trace
-  local ret=0
-  # Check for programs that this script uses.
-  csih_check_program_or_warn awk gawk || ret=1
-  csih_check_program_or_warn ls coreutils || ret=1
-  csih_check_program_or_warn grep grep || ret=1
-  csih_check_program_or_warn sed sed || ret=1
-  csih_check_program_or_warn id coreutils || ret=1
-  csih_check_program_or_warn cut coreutils || ret=1
-  csih_check_program_or_warn uname coreutils || ret=1
-  csih_check_program_or_warn cygcheck cygwin || ret=1
-  csih_check_program_or_warn getfacl cygwin || ret=1
-  csih_check_program_or_warn regtool cygwin || ret=1
-  csih_check_program_or_warn chmod coreutils || ret=1
-  csih_check_program_or_warn chown coreutils || ret=1
-  csih_check_program_or_warn mkdir coreutils || ret=1
-  csih_check_program_or_warn stat coreutils || ret=1
-  csih_check_program_or_warn cp coreutils || ret=1
-  # do not check for editrights here -- clients which use this
-  # library may not need the editrights functionality
-  return "${ret}"
-} # === End of csih_sanity_check() === #
-readonly -f csih_sanity_check
+  local tool=$1
+  shift
+  "$(/usr/bin/cygpath -ma "${SYSTEMROOT}")/system32/${tool}" "$@"
+  return $?
+}
+readonly -f csih_call_winsys32
 
 # ======================================================================
 # Routine: csih_get_localized_account_name
@@ -1289,8 +1578,8 @@ _csih_convert_w32vol_to_shell_pattern()
   then
     case "${w32vol:0:1}" in
       [A-Za-z] )
-        lowerD=$(echo "${w32vol:0:1}" | tr '[:upper:]' '[:lower:]')
-        upperD=$(echo "${w32vol:0:1}" | tr '[:lower:]' '[:upper:]')
+        lowerD=$(echo "${w32vol:0:1}" | /usr/bin/tr '[:upper:]' '[:lower:]')
+        upperD=$(echo "${w32vol:0:1}" | /usr/bin/tr '[:lower:]' '[:upper:]')
         w32vol="[${upperD}${lowerD}]:${w32vol:2}"
         ;;
     esac
@@ -1320,7 +1609,7 @@ _csih_path_in_volumelist_core()
   local w32path="$1"
   local volumelist="$2"
 
-  echo "$volumelist" | tr ';' '\n' | while read p
+  echo "$volumelist" | /usr/bin/tr ';' '\n' | while read p
   do
     _csih_convert_w32vol_to_shell_pattern "$p"
     case "$w32path" in
@@ -1405,7 +1694,7 @@ csih_path_supports_acls()
   fi
 
   # convert to w32 format
-  w32path=$(cygpath -m "$1")
+  w32path=$(/usr/bin/cygpath -m "$1")
 
   #if _csih_path_in_volumelist "$w32path" "$csih_WIN32_VOLS_WITH_ACLS"
   #then
@@ -1417,11 +1706,11 @@ csih_path_supports_acls()
   #  return 1
   #fi
 
-  output=$(csih_invoke_helper getVolInfo "$1" | grep "FILE_PERSISTENT_ACLS" 2>/dev/null)
+  output=$(csih_invoke_helper getVolInfo "$1" | /usr/bin/grep "FILE_PERSISTENT_ACLS" 2>/dev/null)
   rstatus=$?
   if [ "$rstatus" -eq 0 ]
   then  
-      echo "$output" | grep "TRUE" || rstatus=2
+      echo "$output" | /usr/bin/grep "TRUE" || rstatus=2
   fi    
   return $rstatus
 } # === End of csih_path_supports_acls() === #
@@ -1430,7 +1719,7 @@ readonly -f csih_path_supports_acls
 # ======================================================================
 # Routine: csih_guest_account_active
 #   Returns true (0) if the Guest account is active
-#   Returns false (non-zero) otherwise, or if !csih_is_nt
+#   Returns false (non-zero) otherwise.
 #
 # SETS GLOBAL VARIABLE: csih_localized_account_name
 # ======================================================================
@@ -1440,18 +1729,15 @@ csih_guest_account_active() {
   local rstatus=1
   local str
 
-  if csih_is_nt
+  if csih_get_guest_account_name 
   then
-    if csih_get_guest_account_name 
+    str=$(csih_call_winsys32 net user "$csih_localized_account_name" |\
+          /usr/bin/sed -n -e '/^Account active/s/^Account active *//p' |\
+          /usr/bin/tr '[:upper:]' '[:lower:]')
+    if [ "$str" = "yes" ]
     then
-      str=$(net user "$csih_localized_account_name" |\
-            sed -n -e '/^Account active/s/^Account active *//p' |\
-            tr '[:upper:]' '[:lower:]')
-      if [ "$str" = "yes" ]
-      then
-        rstatus=0
-        return $rstatus
-      fi
+      rstatus=0
+      return $rstatus
     fi
   fi
   return $rstatus
@@ -1486,13 +1772,14 @@ csih_install_config()
 
   if [ -f "$dest" ]
   then
-    if csih_request "Overwrite existing ${dest} file?"
+    if ! csih_request "Overwrite existing ${dest} file?"
     then
-      rm -f "${dest}"
-      if [ -f "${dest}" ]
-      then
-        csih_warning "Can't overwrite. ${dest} is write protected."
-      fi
+      return 0
+    fi
+    /usr/bin/rm -f "${dest}"
+    if [ -f "${dest}" ]
+    then
+      csih_warning "Can't overwrite. ${dest} is write protected."
     fi
   fi
 
@@ -1505,7 +1792,7 @@ csih_install_config()
       csih_warning "Check '${DEFAULTSDIR}'"
     else
       csih_inform "Creating default ${dest} file"
-      cp ${DEFAULTSDIR}/${dest} ${dest}
+      /usr/bin/cp ${DEFAULTSDIR}/${dest} ${dest}
       return $?
     fi
   fi
@@ -1542,7 +1829,7 @@ csih_make_dir()
 
   if [ ! -e "${DIR}" ]
   then
-    mkdir -p "${DIR}"
+    /usr/bin/mkdir -p "${DIR}"
     if [ ! -e "${DIR}" ]
     then
       csih_error "Creating ${DIR} directory failed."
@@ -1568,7 +1855,7 @@ csih_get_system_and_admins_ids()
   local ret=0
   for fname in ${SYSCONFDIR}/passwd ${SYSCONFDIR}/group
   do
-    if stat -c "%A" "${fname}" | grep -Eq  '^-r..r..r..'
+    if /usr/bin/stat -c "%A" "${fname}" | /usr/bin/grep -Eq  '^-r..r..r..'
     then
       true
     else
@@ -1581,8 +1868,8 @@ csih_get_system_and_admins_ids()
   [ ! -r /etc/passwd -o ! -r  /etc/group ] && return 1;
 
   # require Administrators group and SYSTEM in /etc/group
-  csih_ADMINSGID=$(sed -ne '/^[^:]*:S-1-5-32-544:.*:/{s/[^:]*:[^:]*:\([0-9]*\):.*$/\1/p;q}' ${SYSCONFDIR}/group)
-  csih_SYSTEMGID=$(sed -ne '/^[^:]*:S-1-5-18:.*:/{s/[^:]*:[^:]*:\([0-9]*\):.*$/\1/p;q}' ${SYSCONFDIR}/group)
+  csih_ADMINSGID=$(/usr/bin/sed -ne '/^[^:]*:S-1-5-32-544:.*:/{s/[^:]*:[^:]*:\([0-9]*\):.*$/\1/p;q}' ${SYSCONFDIR}/group)
+  csih_SYSTEMGID=$(/usr/bin/sed -ne '/^[^:]*:S-1-5-18:.*:/{s/[^:]*:[^:]*:\([0-9]*\):.*$/\1/p;q}' ${SYSCONFDIR}/group)
   if [ -z "$csih_ADMINSGID" -o -z "$csih_SYSTEMGID" ]
   then
     csih_warning "It appears that you do not have entries for the local"
@@ -1596,8 +1883,8 @@ csih_get_system_and_admins_ids()
   fi
 
   # only require SYSTEM in /etc/passwd; warn if either is missing
-  csih_ADMINSUID=$(sed -ne '/^[^:]*:[^:]*:[0-9]*:[0-9]*:[^:]*,S-1-5-32-544:.*:/{s/[^:]*:[^:]*:\([0-9]*\):.*$/\1/p;q}' /etc/passwd)
-  csih_SYSTEMUID=$(sed -ne '/^[^:]*:[^:]*:[0-9]*:[0-9]*:[^:]*,S-1-5-18:.*:/{s/[^:]*:[^:]*:\([0-9]*\):.*$/\1/p;q}' /etc/passwd)
+  csih_ADMINSUID=$(/usr/bin/sed -ne '/^[^:]*:[^:]*:[0-9]*:[0-9]*:[^:]*,S-1-5-32-544:.*:/{s/[^:]*:[^:]*:\([0-9]*\):.*$/\1/p;q}' /etc/passwd)
+  csih_SYSTEMUID=$(/usr/bin/sed -ne '/^[^:]*:[^:]*:[0-9]*:[0-9]*:[^:]*,S-1-5-18:.*:/{s/[^:]*:[^:]*:\([0-9]*\):.*$/\1/p;q}' /etc/passwd)
   if [ -z "$csih_ADMINSUID" -o -z "$csih_SYSTEMUID" ]
   then
     csih_warning "It appears that you do not have an entry for the local"
@@ -1627,7 +1914,7 @@ csih_check_passwd_and_group()
   csih_stacktrace "${@}"
   $_csih_trace
   local ret=0
-  if [ "$(id -gn)" = "mkpasswd" ]
+  if [ "$(/usr/bin/id -gn)" = "mkpasswd" ]
   then
     csih_warning "It appears that you do not have an entry for your user ID"
     csih_warning "in /etc/passwd."
@@ -1642,7 +1929,7 @@ csih_check_passwd_and_group()
     ret=1
   elif [ -n "$USERDOMAIN" ] && [ -n "$USERNAME" ]
   then
-    if ! grep -E -q -i "^$(id -un):.*U-${USERDOMAIN}\\\\${USERNAME}" /etc/passwd
+    if ! /usr/bin/grep -E -q -i "^$(/usr/bin/id -un):.*U-${USERDOMAIN}\\\\${USERNAME}" /etc/passwd
     then
       csih_warning "It appears that you do not have an entry for:"
       csih_warning "   ${USERDOMAIN}\\${USERNAME}"
@@ -1657,7 +1944,7 @@ csih_check_passwd_and_group()
     fi
   fi
 
-  if [ "$(id -gn)" = mkgroup ]
+  if [ "$(/usr/bin/id -gn)" = mkgroup ]
   then
     csih_warning "It appears that you do not have an entry for your group ID"
     csih_warning "in /etc/group.  If this check is incorrect, then re-run"
@@ -1686,7 +1973,7 @@ csih_check_user()
 {
   csih_stacktrace "${@}"
   $_csih_trace
-  local count=$(grep -ic "^$1:" /etc/passwd)
+  local count=$(/usr/bin/grep -ic "^$1:" /etc/passwd)
   if [ $count = 0 ]
   then
     csih_warning "User $1 does not appear in /etc/passwd."
@@ -1704,25 +1991,10 @@ csih_check_user()
 readonly -f csih_check_user
 
 # ======================================================================
-# Routine: _csih_warning_for_win9x_perms
-#   Display a warning message for the user about permissions/ACL
-#   non-support in Win9x/Me.
-# ======================================================================
-_csih_warning_for_win9x_perms()
-{
-  csih_stacktrace "${@}"
-  csih_warning "Operating systems before Windows NT do not support"
-  csih_warning "accurate permissions. Please consider updating your"
-  csih_warning "operating system to something relevant to this century."
-  csih_warning "Note also that cygwin-1.7 and above do not support Win9x/Me)."
-} # === End of _csih_warning_for_win9x_perms() === #
-readonly -f _csih_warning_for_win9x_perms
-
-# ======================================================================
 # Routine: _csih_warning_for_missing_ACL_support
 #   Display a warning message for the user about files located on
 #   volumes that do not support persistent ACLS -- e.g. FAT drives,
-#   nosmbntsec (cygwin-1.5), noacl (cygwin-1.7).
+#   noacl, etc.
 # ======================================================================
 _csih_warning_for_missing_ACL_support()
 {
@@ -1733,8 +2005,7 @@ _csih_warning_for_missing_ACL_support()
   csih_warning "Please consider, if possible and appropriate, one of the"
   csih_warning "following remedies:"
   csih_warning "  1) converting to NTFS using 'convert.exe'"
-  csih_warning "  2) removing nosmbntsec from the CYGWIN variable (cygwin-1.5)"
-  csih_warning "  3) mounting the relevant volume using the 'acl' option (cygwin-1.7)"
+  csih_warning "  2) mounting the relevant volume using the 'acl' option"
 }
 # === End of _csih_warning_for_missing_ACL_support() === #
 readonly -f _csih_warning_for_missing_ACL_support
@@ -1755,13 +2026,6 @@ csih_check_dir_perms()
     return 1
   fi  
 
-  if ! csih_is_nt
-  then
-    _csih_warning_for_win9x_perms
-    csih_warning "Continuing, but something might break..."
-    return 0
-  fi
-
   if ! csih_path_supports_acls "$1"
   then
     _csih_warning_for_missing_ACL_support "$1"
@@ -1769,7 +2033,7 @@ csih_check_dir_perms()
     return 0
   fi
 
-  if stat -c "%A" "$1" | grep -Eq ^"$2"
+  if /usr/bin/stat -c "%A" "$1" | /usr/bin/grep -Eq ^"$2"
   then
     true
   else
@@ -1798,14 +2062,7 @@ csih_check_access()
   local perm="$2"
   local msg="$3"
   local notify=0;
-  local ls_result="$(ls -dLln "$file" 2> /dev/null)"
-
-  if ! csih_is_nt
-  then
-    _csih_warning_for_win9x_perms
-    csih_warning "Continuing, but something might break..."
-    return 0
-  fi
+  local ls_result="$(/usr/bin/ls -dLln "$file" 2> /dev/null)"
 
   if [ -z "$csih_ADMINSGID" ]
   then
@@ -1825,32 +2082,32 @@ csih_check_access()
 
   # If the owner of the file does not have access,
   # then notify the user.
-  if [ -z "$(echo "$ls_result" | sed -n /^."$perm"/p)" ]
+  if [ -z "$(echo "$ls_result" | /usr/bin/sed -n /^."$perm"/p)" ]
   then
     notify=1;
 
   # If the 'Administrators' group has owner or group access to the file,
   # but does not have the desired access, then notify the user.
 
-  elif ( [ -n "$csih_ADMINSUID" -a "$(echo "$ls_result" | awk '{ print $3 }')" -eq $csih_ADMINSUID ] || \
-         ( ! csih_is_nt2003 && [ -n "$csih_SYSTEMUID" -a "$(echo "$ls_result" | awk '{ print $3 }')" -eq $csih_SYSTEMUID ] ))
+  elif ( [ -n "$csih_ADMINSUID" -a "$(echo "$ls_result" | /usr/bin/awk '{ print $3 }')" -eq $csih_ADMINSUID ] || \
+         ( ! csih_is_nt2003 && [ -n "$csih_SYSTEMUID" -a "$(echo "$ls_result" | /usr/bin/awk '{ print $3 }')" -eq $csih_SYSTEMUID ] ))
   then
-    # Administrators group owns the file, or (on < NT2003) SYSTEM owns the file
+    # Administrators group owns the file, or (on < NT2003,XP64) SYSTEM owns the file
     # this is ok; do nothing.
     true;
-  elif ( [ "$(echo "$ls_result" | awk '{ print $4 }')" -eq $csih_ADMINSGID ] || \
-         ( ! csih_is_nt2003 && [ "$(echo "$ls_result" | awk '{ print $4 }')" -eq $csih_SYSTEMGID ] ))
+  elif ( [ "$(echo "$ls_result" | /usr/bin/awk '{ print $4 }')" -eq $csih_ADMINSGID ] || \
+         ( ! csih_is_nt2003 && [ "$(echo "$ls_result" | /usr/bin/awk '{ print $4 }')" -eq $csih_SYSTEMGID ] ))
   then
     # The Administrators group has group access to the file, or
-    # (on < NT2003) SYSTEM has group access to the file.  Check to
+    # (on < NT2003,XP64) SYSTEM has group access to the file.  Check to
     # see if the chmod bits for group allow these groups to have
     # "owner-like" access to the file.  If not, notify.
-    [ -z "$(echo "$ls_result" | sed -n /^...."$perm"/p)" ] && notify=1
-  elif ( [ -n "$(getfacl -n "$file" | sed -n /^group:"$csih_ADMINSGID":"$perm"/p )" ] || \
-         ( ! csih_is_nt2003 && [ -n "$(getfacl -n "$file" | sed -e /^group:"$csih_SYSTEMGID":"$perm"/p )" ] ))
+    [ -z "$(echo "$ls_result" | /usr/bin/sed -n /^...."$perm"/p)" ] && notify=1
+  elif ( [ -n "$(/usr/bin/getfacl -n "$file" | /usr/bin/sed -n /^group:"$csih_ADMINSGID":"$perm"/p )" ] || \
+         ( ! csih_is_nt2003 && [ -n "$(/usr/bin/getfacl -n "$file" | /usr/bin/sed -e /^group:"$csih_SYSTEMGID":"$perm"/p )" ] ))
   then
     # There exists an extended ACL entry for the Administrators (or
-    # SYSTEM group, pre 2003), with the desired owner-like permissions.
+    # SYSTEM group, pre NT2003,XP64), with the desired owner-like permissions.
     # This is ok.
     true;
   else
@@ -1862,9 +2119,9 @@ csih_check_access()
     csih_warning "The owner and the Administrators need"
     csih_warning "to have $perm permission to $file."
     csih_warning "Here are the current permissions and ACLS:"
-    ls_result=$(ls -dlL "${file}" 2>&1)
+    ls_result=$(/usr/bin/ls -dlL "${file}" 2>&1)
     csih_warning "    $ls_result"
-    getfacl "${file}" 2>&1 | while read LN
+    /usr/bin/getfacl "${file}" 2>&1 | while read LN
     do
       csih_warning "    $LN"
     done
@@ -1896,7 +2153,7 @@ csih_check_sys_mount()
     return 0
   fi
 
-  if mount | grep -Eq "on ${mnt_point} type.*system"
+  if /usr/bin/mount | /usr/bin/grep -Eq "on ${mnt_point} type.*system"
   then
     true
   else
@@ -1912,45 +2169,22 @@ csih_check_sys_mount()
 readonly -f csih_check_sys_mount
 
 # ======================================================================
-# Routine: csih_check_basic_mounts
-#   Check to see that the SYSTEM account has access to the basic
-#   three mount points: /, /usr/bin, and /usr/lib.
-#   Returns 0 (true) if system mounts are correct; nonzero otherwise.
-# This function is specific to cygwin 1.5.x and below. If called 
-# for cygwin 1.7.0 or above, always returns 0 (true).
+# DEPRECATED: csih_check_basic_mounts
+#   Stub for backward compatibility
 # ======================================================================
 csih_check_basic_mounts()
 {
-  csih_stacktrace "${@}"
-  $_csih_trace
-  local ret=0
-  if ! csih_cygver_is_oneseven
-  then
-    csih_check_sys_mount /usr/bin /bin || ret=$(($ret + 1))
-    csih_check_sys_mount /usr/lib /lib || ret=$(($ret + 1))
-    csih_check_sys_mount / /           || ret=$(($ret + 1))
-
-    # if all three "basic" mounts failed, then give this overall warning:  
-    if [ $ret -gt 2 ]
-    then
-      csih_warning "It appears that you have user mode mounts (\"Just me\" chosen"
-      csih_warning "during install.)  Any daemons installed as services will fail"
-      csih_warning "to function unless system mounts are used.  To change this,"
-      csih_warning "re-run setup.exe and choose \"All users\"."
-      csih_warning ""
-      csih_warning "For more information, see http://cygwin.com/faq/faq0.html#TOC33"
-    fi
-  fi
-  return $ret
+  csih_warning "$csih_progname_base is using deprecated "\
+    "function csih_check_basic_mounts. Continuing..."
+  true
 } # === End of csih_check_basic_mounts() === #
 readonly -f csih_check_basic_mounts
 
 # ======================================================================
 # Routine: csih_privileged_accounts [-u username]
-#   On Windows NT and above, determines the names of all known 
-#   "privileged" users already created on this system, or known to 
-#   this system (e.g. domain users represented in /etc/passwd but not
-#   in the local SAM).  Checks for
+#   Determines the names of all known "privileged" users already created
+#   on this system, or known to this system (e.g. domain users
+#   represented in /etc/passwd but not in the local SAM).  Checks for
 #     cyg_server, sshd_server, cron_server
 #   as well as 'username' passed as an argument to the -u option, if
 #   specified.  The -u username will preferred over the default names,
@@ -1986,56 +2220,53 @@ csih_privileged_accounts()
   shift $(($OPTIND - 1))
   [ -n "${1}" ] && opt_servicename="${1}"
 
-  if csih_is_nt
+  if [ -z "${_csih_all_preexisting_privileged_accounts}" ]
   then
-    if [ -z "${_csih_all_preexisting_privileged_accounts}" ]
-    then
-      for username in sshd_server
-      do
-        # because we quote opt_username (to allow spaces), then we
-        # might have username="" if no -u option was specified. Check
-        # for that case, and skip:
-        if [ -z "$username" ]
-        then
-          continue
-        fi
-
-        in_passwd_status=1
-        in_sam_status=1
-        egrep "^${username}:" /etc/passwd 1>/dev/null 2>&1 && in_passwd_status=0
-        net user "${username}" 1> /dev/null 2>&1 && in_sam_status=0
-        if test $in_passwd_status -eq 0 || test $in_sam_status -eq 0
-        then
-          # however, if the caller specified opt_username, then we must
-          # check that it actually has the required privileges...
-          if [ "$username" = "$opt_username" ]
-          then
-            if ! csih_account_has_necessary_privileges "$username"
-            then
-              # -u $opt_username does NOT have the required privileges,
-              # even though it exists.  Warn, and skip
-              csih_warning "Privileged account '$opt_username' was specified,"
-              csih_warning "but it does not have the necessary privileges."
-              csih_warning "Continuing, but will probably use a different account."
-              continue
-            fi
-          fi
-          [ -z "${first_account}" ] && first_account="${username}"
-          accounts="${accounts}'${username}' "
-        fi
-        if test $in_passwd_status -eq 0 && test $in_sam_status -ne 0
-        then
-          csih_warning "${username} is in /etc/passwd, but the local"
-          csih_warning "machine's SAM does not know about ${username}."
-          csih_warning "Perhaps ${username} is a pre-existing domain account."
-          csih_warning "Continuing, but check if this is ok."
-        fi
-      done
-      if [ -n "${accounts}" ]
+    for username in sshd_server
+    do
+      # because we quote opt_username (to allow spaces), then we
+      # might have username="" if no -u option was specified. Check
+      # for that case, and skip:
+      if [ -z "$username" ]
       then
-        _csih_all_preexisting_privileged_accounts="${accounts}"
-        _csih_preferred_preexisting_privileged_account="${first_account}"
+        continue
       fi
+
+      in_passwd_status=1
+      in_sam_status=1
+      /usr/bin/grep -E "^${username}:" /etc/passwd 1>/dev/null 2>&1 && in_passwd_status=0
+      csih_call_winsys32 net user "${username}" 1> /dev/null 2>&1 && in_sam_status=0
+      if [ $in_passwd_status -eq 0 -o $in_sam_status -eq 0 ]
+      then
+        # however, if the caller specified opt_username, then we must
+        # check that it actually has the required privileges...
+        if [ "$username" = "$opt_username" ]
+        then
+          if ! csih_account_has_necessary_privileges "$username"
+          then
+            # -u $opt_username does NOT have the required privileges,
+            # even though it exists.  Warn, and skip
+            csih_warning "Privileged account '$opt_username' was specified,"
+            csih_warning "but it does not have the necessary privileges."
+            csih_warning "Continuing, but will probably use a different account."
+            continue
+          fi
+        fi
+        [ -z "${first_account}" ] && first_account="${username}"
+        accounts="${accounts}'${username}' "
+      fi
+      if [ $in_passwd_status -eq 0 -a $in_sam_status -ne 0 ]
+      then
+        csih_warning "${username} is in /etc/passwd, but the local"
+        csih_warning "machine's SAM does not know about ${username}."
+        csih_warning "Perhaps ${username} is a pre-existing domain account."
+        csih_warning "Continuing, but check if this is ok."
+      fi
+    done
+    if [ -n "${accounts}" ]
+    then
+      _csih_all_preexisting_privileged_accounts="${accounts}"
+      _csih_preferred_preexisting_privileged_account="${first_account}"
     fi
   fi
 } # === End of csih_privileged_accounts() === #
@@ -2078,34 +2309,24 @@ csih_account_has_necessary_privileges() {
   $_csih_trace
 
   local user="$1"
-  local admingroup=
   if [ -n "${user}" ]
   then
-    if net user "${user}" >/dev/null 2>&1
+    if csih_call_winsys32 net user "${user}" >/dev/null 2>&1
     then
-      if ! csih_check_program_or_warn editrights editrights
+      if ! csih_check_program_or_warn /usr/bin/editrights editrights
       then
         csih_warning "The 'editrights' program cannot be found or is not executable."
-        csih_warning "Unable to insure that '${user}' has the appropriate privilegeds."
+        csih_warning "Unable to ensure that '${user}' has the appropriate privileges."
         return 1 
       else
-        admingroup=`mkgroup -l | awk -F: '{if ( $2 == "S-1-5-32-544" ) print $1;}' `
-        if [ -z "${admingroup}" ]
-        then 
-          csih_warning "Cannot obtain the Administrators group name from 'mkgroup -l'."
-          return 1 
-        fi
-        if ! net localgroup "${admingroup}" | grep -Eiq "^${user}.?$"
-        then
-          # user not in Administrators group
-          return 1
-        else
-          editrights -u "${user}" -t SeAssignPrimaryTokenPrivilege >/dev/null 2>&1 &&
-          editrights -u "${user}" -t SeCreateTokenPrivilege        >/dev/null 2>&1 &&
-          editrights -u "${user}" -t SeTcbPrivilege                >/dev/null 2>&1 &&
-          editrights -u "${user}" -t SeServiceLogonRight           >/dev/null 2>&1
-          return # status of previous command-list
-        fi
+        # Don't attempt to validate membership in Administrators group
+        # Instead, just try to set the appropriate rights; if it fails
+        # then handle that, instead.
+        /usr/bin/editrights -u "${user}" -t SeAssignPrimaryTokenPrivilege >/dev/null 2>&1 &&
+        /usr/bin/editrights -u "${user}" -t SeCreateTokenPrivilege        >/dev/null 2>&1 &&
+        /usr/bin/editrights -u "${user}" -t SeTcbPrivilege                >/dev/null 2>&1 &&
+        /usr/bin/editrights -u "${user}" -t SeServiceLogonRight           >/dev/null 2>&1
+        return # status of previous command-list
       fi
     fi
   fi
@@ -2116,7 +2337,16 @@ readonly -f csih_account_has_necessary_privileges
 
 # ======================================================================
 # Routine: _csih_setup
-#   Basic checks for all clients of this script.
+#   Basic checks for all clients of this script. It is the final
+#   initialization phase for csih, and unlike the other phases -- which
+#   execute as soon as csih is sourced by the client script -- this
+#   initialization is peformed at "runtime".  That is, it is called
+#   internally by any "public" API function for which the initialiation
+#   is needed.
+#
+#   _csih_setup internally handles repeated calls, and initialization
+#   is skipped if already performed.
+#
 #   Exits if anything is wrong.
 # ======================================================================
 _csih_setup()
@@ -2125,16 +2355,7 @@ _csih_setup()
   $_csih_trace
   if [ "$_csih_setup_already_called" -eq 0 ]
   then
-    if ! csih_check_basic_mounts
-    then
-      csih_error "Problem with mount points. Exiting"
-    fi
   
-    if ! csih_sanity_check
-    then
-      csih_error_multi "There is something badly wrong with your cygwin installation." \
-                       "Please investigate the warnings above and correct."
-    fi
     if [ -z "${SYSCONFDIR}" ]
     then
       csih_error "Variable SYSCONFDIR is empty (should be '/etc' ?)"
@@ -2158,19 +2379,19 @@ _csih_setup()
     # attempt to set permissions, but not an error if fail
     # will verify that we actually HAVE correct permissions below. 
     csih_make_dir "${LOCALSTATEDIR}/run"
-    chmod 1777 "${LOCALSTATEDIR}/run" >&/dev/null || /bin/true
-    setfacl -m u:system:rwx "${LOCALSTATEDIR}/run" >&/dev/null || /bin/true
-    setfacl -m g:544:rwx "${LOCALSTATEDIR}/run" >&/dev/null || /bin/true
+    /usr/bin/chmod 1777 "${LOCALSTATEDIR}/run" >&/dev/null || true
+    /usr/bin/setfacl -m u:system:rwx "${LOCALSTATEDIR}/run" >&/dev/null || true
+    /usr/bin/setfacl -m g:544:rwx "${LOCALSTATEDIR}/run" >&/dev/null || true
 
     csih_make_dir "${LOCALSTATEDIR}/log"
-    chmod 1777 "${LOCALSTATEDIR}/log" >&/dev/null || /bin/true
-    setfacl -m u:system:rwx "${LOCALSTATEDIR}/log" >&/dev/null || /bin/true
-    setfacl -m g:544:rwx "${LOCALSTATEDIR}/log" >&/dev/null || /bin/true
+    /usr/bin/chmod 1777 "${LOCALSTATEDIR}/log" >&/dev/null || true
+    /usr/bin/setfacl -m u:system:rwx "${LOCALSTATEDIR}/log" >&/dev/null || true
+    /usr/bin/setfacl -m g:544:rwx "${LOCALSTATEDIR}/log" >&/dev/null || true
 
     csih_make_dir "${LOCALSTATEDIR}/empty"
-    chmod 755 "${LOCALSTATEDIR}/empty" >&/dev/null || /bin/true
-    setfacl -m u:system:r-x "${LOCALSTATEDIR}/empty" >&/dev/null || /bin/true
-    setfacl -m g:544:r-x "${LOCALSTATEDIR}/empty" >&/dev/null || /bin/true
+    /usr/bin/chmod 755 "${LOCALSTATEDIR}/empty" >&/dev/null || true
+    /usr/bin/setfacl -m u:system:r-x "${LOCALSTATEDIR}/empty" >&/dev/null || true
+    /usr/bin/setfacl -m g:544:r-x "${LOCALSTATEDIR}/empty" >&/dev/null || true
 
     # daemons need write access to /var/run to create pid file 
     if ! csih_check_access "${LOCALSTATEDIR}/run" .w.
@@ -2192,7 +2413,7 @@ _csih_setup()
     # script to explicitly check accees to the specific configuration
     # files inside /etc... 
     csih_make_dir "${SYSCONFDIR}"
-    chmod 755 "${SYSCONFDIR}" >&/dev/null || /bin/true
+    /usr/bin/chmod 755 "${SYSCONFDIR}" >&/dev/null || true
  
     _csih_setup_already_called=1
   fi
@@ -2236,25 +2457,22 @@ readonly -f _csih_setup
 #   OPTARG
 #
 # csih_auto_answer=no behavior
-#   nt
-#     if [service_name] and [-q] and [service_name] is installed
-#       get account under which it is installed
-#       validate account (may issue error!)
-#       use that account name
-#     elif $default_username is specified, exists, and has necessary privileges,
-#       use $default_username
-#     elif any(cyg_server cron_server sshd_server) exists,
-#       use first in list
-#     else
-#       if nt2003 || csih_FORCE_PRIVILEGED_USER
-#         if $default_username is specified
-#            use $default_username
-#         else
-#            use cyg_server
-#       else
-#         do nothing (csih_PRIVILEGED_USERNAME="")
+#   if [service_name] and [-q] and [service_name] is installed
+#     get account under which it is installed
+#     validate account (may issue error!)
+#     use that account name
+#   elif $default_username is specified, exists, and has necessary privileges,
+#     use $default_username
+#   elif any(cyg_server cron_server sshd_server) exists,
+#     use first in list
 #   else
-#     do nothing (csih_PRIVILEGED_USERNAME="")
+#     if csih_is_nt2003 || csih_FORCE_PRIVILEGED_USER # note: csih_is_nt2003 true for XP64 too
+#       if $default_username is specified
+#          use $default_username
+#       else
+#          use cyg_server
+#     else
+#       do nothing (csih_PRIVILEGED_USERNAME="")
 #
 # ======================================================================
 csih_select_privileged_username()
@@ -2285,209 +2503,199 @@ csih_select_privileged_username()
   shift $(($OPTIND - 1))
   [ -n "${1}" ] && opt_servicename="${1}"
 
-  # save time if win9x
-  if ! csih_is_nt
+  # save time if csih_PRIVILEGED_USERNAME already set
+  if [ -n "${csih_PRIVILEGED_USERNAME}" ]
   then
-    csih_PRIVILEGED_USERNAME=""
     return
   fi
 
-  if csih_is_nt
+  csih_privileged_accounts -u "$opt_default_username"
+
+  # if query mode and opt_servicename has been specified,
+  # first check to see if the service has already been 
+  # installed.  If so, get the service's account name.
+  # If (and only if) that account is privileged, then 
+  # record it in csih_PRIVILEGED_USERNAME.
+  if [ $opt_query -ne 0 -a -n "${opt_servicename}" ]
   then
-    # save time if csih_PRIVILEGED_USERNAME already set
-    if [ -n "${csih_PRIVILEGED_USERNAME}" ]
+    if /usr/bin/cygrunsrv -Q "${opt_servicename}" >/dev/null 2>&1
     then
-      return
-    fi
-
-    csih_privileged_accounts -u "$opt_default_username"
-
-    # if query mode and opt_servicename has been specified,
-    # first check to see if the service has already been 
-    # installed.  If so, get the service's account name.
-    # If (and only if) that account is privileged, then 
-    # record it in csih_PRIVILEGED_USERNAME.
-    if [ $opt_query -ne 0 -a -n "${opt_servicename}" ]
-    then
-      if cygrunsrv -Q "${opt_servicename}" >/dev/null 2>&1
+      username=$(/usr/bin/cygrunsrv -V -Q "${opt_servicename}" 2>&1 | /usr/bin/sed -n -e '/^Account/s/^.* : //p')
+      username="${username/\.\\/${COMPUTERNAME}\\}"
+      if [ "${username}" = "LocalSystem" ]
       then
-        username=$(cygrunsrv -V -Q "${opt_servicename}" 2>&1 | sed -n -e '/^Account/s/^.* : //p')
-        username="${username/\.\\/${COMPUTERNAME}\\}"
-        if [ "${username}" = "LocalSystem" ]
+        username=#empty; SYSTEM is not a "privileged user"
+      else
+        username=$(/usr/bin/grep -F "${username}" /etc/passwd | /usr/bin/cut -d: -f 1)
+      fi
+      if [ -n "${username}" ]
+      then
+        if csih_privileged_account_exists "${username}"
         then
-          username=#empty; SYSTEM is not a "privileged user"
+          # ${opt_servicename} is installed under account "${username}",
+          # which is one of the pre-declared privileged users -- or,
+          # we have already validated that ${username} has the necessary
+          # privilegeds. Great!
+          csih_PRIVILEGED_USERNAME="${username}"
+          return
         else
-          username=$(fgrep "${username}" /etc/passwd | cut -d: -f 1)
-        fi
-        if [ -n "${username}" ]
-        then
-          if csih_privileged_account_exists "${username}"
+          if csih_account_has_necessary_privileges "${username}"
           then
             # ${opt_servicename} is installed under account "${username}",
-            # which is one of the pre-declared privileged users -- or,
-            # we have already validated that ${username} has the necessary
-            # privilegeds. Great!
+            # but ${username} is not one of the pre-declared privileged users
+            # (cyg_server, sshd_server, cron_server) -- nor had we previously
+            # validated that it has the necessary privileges. However, we just
+            # did validate that, and it DOES have the necessary privileges.
+            # Add it to the list.
             csih_PRIVILEGED_USERNAME="${username}"
+            _csih_all_preexisting_privileged_accounts="${_csih_all_preexisting_privileged_accounts}'${username}' "
             return
           else
-            if csih_account_has_necessary_privileges "${username}"
-            then
-              # ${opt_servicename} is installed under account "${username}",
-              # but ${username} is not one of the pre-declared privileged users
-              # (cyg_server, sshd_server, cron_server) -- nor had we previously
-              # validated that it has the necessary privileges. However, we just
-              # did validate that, and it DOES have the necessary privileges.
-              # Add it to the list.
-              csih_PRIVILEGED_USERNAME="${username}"
-              _csih_all_preexisting_privileged_accounts="${_csih_all_preexisting_privileged_accounts}'${username}' "
-              return
-            else
-              # ${opt_servicename} is installed under account "${username}", but
-              # ${username} is not one of the pre-declared privileged users
-              # (cyg_server, sshd_server, cron_server), nor does it have the
-              # necessary privileges. Ignore it...
-              return
-            fi
-          fi # privileged_user_exists
-        else
-          # ${opt_servicename} installed under LocalSystem, or there was
-          # some error in determining the account name under which it is installed.
-          return
-        fi # $username empty
-      fi # ${opt_servicename} is not installed
-    fi # not (opt_query && opt_servicename)
-
-    if [ $opt_query -eq 0 ]
-    then
-      if csih_is_nt2003
-      then
-        csih_inform "You appear to be running Windows 2003 Server or later.  On 2003"
-        csih_inform "and later systems, it's not possible to use the LocalSystem"
-        csih_inform "account for services that can change the user id without an"
-        csih_inform "explicit password (such as passwordless logins [e.g. public key"
-        csih_inform "authentication] via sshd)."
-        echo ""
-        csih_inform "If you want to enable that functionality, it's required to create"
-        csih_inform "a new account with special privileges (unless a similar account"
-        csih_inform "already exists). This account is then used to run these special"
-        csih_inform "servers."
-        echo ""
-        csih_inform "Note that creating a new user requires that the current account"
-        csih_inform "have Administrator privileges itself."
-      elif [ "x$csih_FORCE_PRIVILEGED_USER" = "xyes" ]
-      then
-        csih_inform "You have requested that a special privileged user be used"
-        csih_inform "by the service, and are running on Windows NT, 2k or XP where"
-        csih_inform "this is not actually required (LocalSystem would also work)."
-        echo ""
-        csih_inform "Note that creating a new user requires that the current account"
-        csih_inform "have Administrator privileges itself."
+            # ${opt_servicename} is installed under account "${username}", but
+            # ${username} is not one of the pre-declared privileged users
+            # (cyg_server, sshd_server, cron_server), nor does it have the
+            # necessary privileges. Ignore it...
+            return
+          fi
+        fi # privileged_user_exists
       else
-        # hmm. NT/2k/XP, but not csih_FORCE_PRIVILEGED_USER
-        # in this case, we emit no messages. If a privileged
-        # user already exists, we'll use it. Otherwise, don't
-        # specify a "privileged" user. Callers will know to
-        # silently use LocalSystem.
-        :
-      fi
-    fi
-
-    if test -n "${_csih_all_preexisting_privileged_accounts}" && test -z "$opt_default_username"
-    then
-      echo ""
-      csih_inform "The following privileged accounts were found: ${_csih_all_preexisting_privileged_accounts}."
-      username="${_csih_preferred_preexisting_privileged_account}"
-    else
-      if ( csih_is_nt2003 || [ "x$csih_FORCE_PRIVILEGED_USER" = "xyes" ] )
-      then
-        if test $opt_query -eq 0 && test -z "$opt_default_username"
-        then
-          echo ""
-          csih_inform "No privileged account could be found."
-        fi
-        if [ -n "$opt_default_username" ]
-        then
-          username="sshd_server"
-        else
-          username="sshd_server"
-        fi
-      else
-        # nt/2k/xp and not csih_FORCE_PRIVILEGED_USER and username is empty
-        # we couldn't find a pre-existing privileged user, but we don't 
-        # really need one (nt/2k/xp) and haven't explicitly requested one
-        # via csih_FORCE...  In this case, we're done: just return. (this
-        # is true regardless of the value of $opt_query)
+        # ${opt_servicename} installed under LocalSystem, or there was
+        # some error in determining the account name under which it is installed.
         return
-      fi
-    fi
+      fi # $username empty
+    fi # ${opt_servicename} is not installed
+  fi # not (opt_query && opt_servicename)
 
-    # if we get here, then $username WILL be set to something
-    if [ $opt_query -eq 0 ]
+  if [ $opt_query -eq 0 ]
+  then
+    if csih_is_nt2003
     then
+      csih_inform "You appear to be running Windows XP 64bit, Windows 2003 Server,"
+      csih_inform "or later.  On these systems, it's not possible to use the LocalSystem"
+      csih_inform "account for services that can change the user id without an"
+      csih_inform "explicit password (such as passwordless logins [e.g. public key"
+      csih_inform "authentication] via sshd)."
       echo ""
-      csih_inform "This script plans to use '${username}'."
-      csih_inform "'${username}' will only be used by registered services."
-      #if [ $opt_force -eq 0 ]
-      #then 
-      #  if csih_request "Do you want to use a different name?"
-      #  then
-      #    csih_get_value "Enter the new user name:"
-      #    username="${csih_value}"
-      #  fi
-      #fi
-    else
-      theservice=${opt_servicename:-the service}
-      csih_inform "This script will assume that ${theservice} will run"
-      csih_inform "under the '${username}' account."
-      if [ $opt_force -eq 0 ]
-      then
-        if csih_request "Will ${theservice} run under a different account?"
-        then
-          csih_get_value "Enter the user name used by the service:"
-          username="${csih_value}"
-        fi
-      fi
-    fi
-  
-    # faster than checking SAM -- see if username is one that we
-    # already know about
-    if csih_privileged_account_exists "$username"
+      csih_inform "If you want to enable that functionality, it's required to create"
+      csih_inform "a new account with special privileges (unless a similar account"
+      csih_inform "already exists). This account is then used to run these special"
+      csih_inform "servers."
+      echo ""
+      csih_inform "Note that creating a new user requires that the current account"
+      csih_inform "have Administrator privileges itself."
+    elif [ "x$csih_FORCE_PRIVILEGED_USER" = "xyes" ]
     then
-      _csih_preferred_preexisting_privileged_account="${username}"
+      csih_inform "You have requested that a special privileged user be used"
+      csih_inform "by the service, and are running on Windows NT, 2k or (32bit) XP"
+      csih_inform "where this is not actually required (LocalSystem would also work)."
+      echo ""
+      csih_inform "Note that creating a new user requires that the current account"
+      csih_inform "have Administrator privileges itself."
     else
-      # perhaps user specified a pre-existing privileged account we
-      # don't know about
-      if egrep "^${username}:" /etc/passwd 1>/dev/null 2>&1 ||
-         net user "${username}" >/dev/null 2>&1
-      then
-        if ! csih_account_has_necessary_privileges "${username}"
-        then
-          csih_warning "The specified account '${username}' does not have the"
-          csih_warning "required permissions or group memberships. This may"
-          csih_warning "cause problems if not corrected; continuing..."
-        elif [ ${opt_query} -eq 0 ]
-        then
-          csih_inform "'${username}' already exists...and has all necessary permissions."
-        fi
-        # so, add it to our list, so that csih_privileged_account_exists
-        # will return true...
-        _csih_preferred_preexisting_privileged_account="${username}"
-        _csih_all_preexisting_privileged_accounts="${_csih_all_preexisting_privileged_accounts}'${username}' "   
-      fi
-      # if it doesn't exist, we're probably in the midst of creating it.
-      # so don't issue any warnings.
+      # hmm. NT/2k/XP(32), but not csih_FORCE_PRIVILEGED_USER
+      # in this case, we emit no messages. If a privileged
+      # user already exists, we'll use it. Otherwise, don't
+      # specify a "privileged" user. Callers will know to
+      # silently use LocalSystem.
+      :
     fi
-    csih_PRIVILEGED_USERNAME="${username}"
   fi
+
+  if [ -n "${_csih_all_preexisting_privileged_accounts}" -a -z "$opt_default_username" ]
+  then
+    echo ""
+    csih_inform "The following privileged accounts were found: ${_csih_all_preexisting_privileged_accounts}."
+    username="${_csih_preferred_preexisting_privileged_account}"
+  else
+    if ( csih_is_nt2003 || [ "x$csih_FORCE_PRIVILEGED_USER" = "xyes" ] )
+    then
+      if [ $opt_query -eq 0 -a -z "$opt_default_username" ]
+      then
+        echo ""
+        csih_inform "No privileged account could be found."
+      fi
+      if [ -n "$opt_default_username" ]
+      then
+        username="sshd_server"
+      else
+        username="sshd_server"
+      fi
+    else
+      # nt/2k/xp32 and not csih_FORCE_PRIVILEGED_USER and username is empty
+      # we couldn't find a pre-existing privileged user, but we don't 
+      # really need one (nt/2k/xp32) and haven't explicitly requested one
+      # via csih_FORCE...  In this case, we're done: just return. (this
+      # is true regardless of the value of $opt_query)
+      return
+    fi
+  fi
+
+  # if we get here, then $username WILL be set to something
+  if [ $opt_query -eq 0 ]
+  then
+    echo ""
+    csih_inform "This script plans to use '${username}'."
+    csih_inform "'${username}' will only be used by registered services."
+    #if [ $opt_force -eq 0 ]
+    #then 
+    #  if csih_request "Do you want to use a different name?"
+    #  then
+    #    csih_get_value "Enter the new user name:"
+    #    username="${csih_value}"
+    #  fi
+    #fi
+  else
+    theservice=${opt_servicename:-the service}
+    csih_inform "This script will assume that ${theservice} will run"
+    csih_inform "under the '${username}' account."
+    if [ $opt_force -eq 0 ]
+    then
+      if csih_request "Will ${theservice} run under a different account?"
+      then
+        csih_get_value "Enter the user name used by the service:"
+        username="${csih_value}"
+      fi
+    fi
+  fi
+
+  # faster than checking SAM -- see if username is one that we
+  # already know about
+  if csih_privileged_account_exists "$username"
+  then
+    _csih_preferred_preexisting_privileged_account="${username}"
+  else
+    # perhaps user specified a pre-existing privileged account we
+    # don't know about
+    if /usr/bin/grep -E "^${username}:" /etc/passwd 1>/dev/null 2>&1 ||
+       csih_call_winsys32 net user "${username}" >/dev/null 2>&1
+    then
+      if ! csih_account_has_necessary_privileges "${username}"
+      then
+        csih_warning "The specified account '${username}' does not have the"
+        csih_warning "required permissions or group memberships. This may"
+        csih_warning "cause problems if not corrected; continuing..."
+      elif [ ${opt_query} -eq 0 ]
+      then
+        csih_inform "'${username}' already exists...and has all necessary permissions."
+      fi
+      # so, add it to our list, so that csih_privileged_account_exists
+      # will return true...
+      _csih_preferred_preexisting_privileged_account="${username}"
+      _csih_all_preexisting_privileged_accounts="${_csih_all_preexisting_privileged_accounts}'${username}' "   
+    fi
+    # if it doesn't exist, we're probably in the midst of creating it.
+    # so don't issue any warnings.
+  fi
+  csih_PRIVILEGED_USERNAME="${username}"
 } # === End of csih_select_privileged_username() === #
 readonly -f csih_select_privileged_username
 
 
 # ======================================================================
 # Routine: csih_create_privileged_user
-#   On Windows Server 2003 and above (including Windows Vista), or if
-#   csih_FORCE_PRIVILEGED_USER == "yes" for Windows NT and above,
-#   allows user to select a pre-existing privileged user, or to
+#   On 64bit Windows XP, Windows Server 2003 and above (including Windows
+#   Vista), or if csih_FORCE_PRIVILEGED_USER == "yes" for Windows NT and
+#   above, allows user to select a pre-existing privileged user, or to
 #   create a new privileged user.
 #   $1 (optional) will be used as the password if non-empty
 #   
@@ -2508,7 +2716,7 @@ readonly -f csih_select_privileged_username
 #     csih_PRIVILEGED_PASSWORD
 #
 # csih_auto_answer=no behavior
-#   if nt2003 || (nt && FORCE)
+#   if csih_is_nt2003 || FORCE # note: csih_is_nt2003 is true for XP64, too
 #     if pre-existing privileged user
 #       make sure its group membership and perms are correct
 #     else
@@ -2533,12 +2741,13 @@ csih_create_privileged_user()
   local pwd_entry
   local username_in_passwd
   local entry_in_passwd
-  local temp
+  local tmpfile1
+  local tmpfile2
 
   _csih_setup
   csih_select_privileged_username
 
-  if ( csih_is_nt2003 || [ csih_is_nt -a "x$csih_FORCE_PRIVILEGED_USER" = "xyes" ] )
+  if ( csih_is_nt2003 || [ "x$csih_FORCE_PRIVILEGED_USER" = "xyes" ] )
   then
     username="${csih_PRIVILEGED_USERNAME}"
 
@@ -2551,7 +2760,7 @@ csih_create_privileged_user()
       if csih_request "Create new privileged user account '${username}'?"
       then
  
-        dos_var_empty=$(cygpath -w ${LOCALSTATEDIR}/empty)
+        dos_var_empty=$(/usr/bin/cygpath -w ${LOCALSTATEDIR}/empty)
         while [ "${username_in_sam}" != "yes" ]
         do
           if [ -n "${password_value}" ]
@@ -2571,15 +2780,16 @@ csih_create_privileged_user()
                                "and no services have been installed."
             fi
           fi
-          net user "${username}" "${_password}" /add /fullname:"Privileged server" \
-                   "/homedir:${dos_var_empty}" /yes > /tmp/nu.$$ 2>&1 && username_in_sam=yes
+          tmpfile1=$(csih_mktemp) || csih_error "Could not create temp file"
+          csih_call_winsys32 net user "${username}" "${_password}" /add /fullname:"Privileged server" \
+                   "/homedir:${dos_var_empty}" /yes > "${tmpfile1}" 2>&1 && username_in_sam=yes
           if [ "${username_in_sam}" != "yes" ]
           then
             csih_warning "Creating the user '${username}' failed!  Reason:"
-            cat /tmp/nu.$$
-            rm /tmp/nu.$$ 
+            /usr/bin/cat "${tmpfile1}"
             echo
           fi
+          /usr/bin/rm -f "${tmpfile1}"
         done
   
         csih_PRIVILEGED_PASSWORD="${_password}"
@@ -2593,16 +2803,11 @@ csih_create_privileged_user()
         csih_inform "In particular, for the sshd server all users' .ssh/authorized_keys"
         csih_inform "files must have appropriate permissions to allow public key"
         csih_inform "authentication. (Re-)running ssh-user-config for each user will set"
-        csih_inform "these permissions corrently. [Similary restrictions apply, for"
+        csih_inform "these permissions correctly. [Similar restrictions apply, for"
         csih_inform "instance, for .rhosts files if the rshd server is running, etc]."
         echo ""
-  
-        passwd_has_expiry_flags=`passwd -v | awk '/^passwd /{print ( $3 >= 1.5 ) ? "yes" : "no";}'`
-        if [ "${passwd_has_expiry_flags}" != "yes" ]
-        then
-          csih_warning "User '${username}' has password expiry set to system default."
-          csih_warning "Please check that password never expires or set it to your needs."
-        elif ! passwd -e "${username}"
+
+        if ! passwd -e "${username}"
         then
           csih_warning "Setting password expiry for user '${username}' failed!"
           csih_warning "Please check that password never expires or set it to your needs."
@@ -2628,16 +2833,16 @@ csih_create_privileged_user()
     if [ "$username_in_sam" = "yes" ]
     then
       # always try to set group membership and privileges
-      admingroup=`mkgroup -l | awk -F: '{if ( $2 == "S-1-5-32-544" ) print $1;}' `
+      admingroup=$(/usr/bin/mkgroup -l | /usr/bin/awk -F: '{if ( $2 == "S-1-5-32-544" ) print $1;}')
       if [ -z "${admingroup}" ]
       then
         csih_warning "Cannot obtain the Administrators group name from 'mkgroup -l'."
         ret=1
-      elif net localgroup "${admingroup}" | grep -Eiq "^${username}.?$"
+      elif csih_call_winsys32 net localgroup "${admingroup}" | /usr/bin/grep -Eiq "^${username}.?$"
       then
         true
       else
-        net localgroup "${admingroup}" "${username}" /add > /dev/null 2>&1 && username_in_admingroup=yes
+        csih_call_winsys32 net localgroup "${admingroup}" "${username}" /add > /dev/null 2>&1 && username_in_admingroup=yes
         if [ "${username_in_admingroup}" != "yes" ]
         then
           csih_warning "Adding user '${username}' to local group '${admingroup}' failed!"
@@ -2647,17 +2852,17 @@ csih_create_privileged_user()
         fi
       fi
   
-      if ! csih_check_program_or_warn editrights editrights
+      if ! csih_check_program_or_warn /usr/bin/editrights editrights
       then
         csih_warning "The 'editrights' program cannot be found or is not executable."
-        csih_warning "Unable to insure that '${username}' has the appropriate privilegeds."
+        csih_warning "Unable to ensure that '${username}' has the appropriate privileges."
         ret=1
       else
-        editrights -a SeAssignPrimaryTokenPrivilege -u ${username} &&
-        editrights -a SeCreateTokenPrivilege -u ${username} &&
-        editrights -a SeTcbPrivilege -u ${username} &&
-        editrights -a SeDenyRemoteInteractiveLogonRight -u ${username} &&
-        editrights -a SeServiceLogonRight -u ${username} &&
+        /usr/bin/editrights -a SeAssignPrimaryTokenPrivilege -u ${username} &&
+        /usr/bin/editrights -a SeCreateTokenPrivilege -u ${username} &&
+        /usr/bin/editrights -a SeTcbPrivilege -u ${username} &&
+        /usr/bin/editrights -a SeDenyRemoteInteractiveLogonRight -u ${username} &&
+        /usr/bin/editrights -a SeServiceLogonRight -u ${username} &&
         username_got_all_rights="yes"
         if [ "${username_got_all_rights}" != "yes" ]
         then
@@ -2668,43 +2873,34 @@ csih_create_privileged_user()
  
       # we just created the user, so of course it's in the local SAM,
       # and mkpasswd -l is appropriate 
-      pwd_entry="$(mkpasswd -l -u "${username}" | sed -n -e '/^'${username}'/s?\(^[^:]*:[^:]*:[^:]*:[^:]*:[^:]*:\).*?\1'${LOCALSTATEDIR}'/empty:/bin/false?p')"
-      grep -Eiq "^${username}:" "${SYSCONFDIR}/passwd" && username_in_passwd=yes &&
-        grep -Fiq "${pwd_entry}" "${SYSCONFDIR}/passwd" && entry_in_passwd=yes
+      pwd_entry="$(/usr/bin/mkpasswd -l -u "${username}" | /usr/bin/sed -n -e '/^'${username}'/s?\(^[^:]*:[^:]*:[^:]*:[^:]*:[^:]*:\).*?\1'${LOCALSTATEDIR}'/empty:/bin/false?p')"
+      /usr/bin/grep -Eiq "^${username}:" "${SYSCONFDIR}/passwd" && username_in_passwd=yes &&
+        /usr/bin/grep -Fiq "${pwd_entry}" "${SYSCONFDIR}/passwd" && entry_in_passwd=yes
       if [ "${entry_in_passwd}" != "yes" ]
       then
         if [ "${username_in_passwd}" = "yes" ]
         then
-          if [ -w "${SYSCONFDIR}" ]
-          then
-            temp="${SYSCONFDIR}/passwd.$$.tmp"
-          elif [ -d "${TMP}" -a -w "${TMP}" ]
-          then
-            temp="${TMP}/passwd.$$.tmp"
-          elif [ -d "${HOME}" -a -w "${HOME}" ]
-          then
-            temp="${HOME}/passwd.$$.tmp"
-          else
-            csih_warning "Cannot find writable temporary directory"
-            return 1;
-          fi
-          grep -Ev "^${username}:" "${SYSCONFDIR}/passwd" > "${temp}" &&
-            mv -f "${temp}" "${SYSCONFDIR}/passwd" || return 1
+          tmpfile2=$(csih_mktemp) || csih_error "Could not create temp file"
+	  /usr/bin/chmod --reference="${SYSCONFDIR}/passwd" "${tmpfile2}"
+	  /usr/bin/chown --reference="${SYSCONFDIR}/passwd" "${tmpfile2}"
+          /usr/bin/getfacl "${SYSCONFDIR}/passwd" | /usr/bin/setfacl -f - "${tmpfile2}"
+	  # use >> instead of > to preserve permissions and acls
+          /usr/bin/grep -Ev "^${username}:" "${SYSCONFDIR}/passwd" >> "${tmpfile2}" &&
+            /usr/bin/mv -f "${tmpfile2}" "${SYSCONFDIR}/passwd" || return 1
         fi
         echo "${pwd_entry}" >> "${SYSCONFDIR}/passwd" || ret=1
       fi
       return "${ret}"
     fi # ! username_in_sam
     return 1 # failed to create user (or prevented by auto-answer veto)
-  fi # csih_is_nt2003 || (csih_is_nt && csih_FORCE_PRIVILEGED_USER)
-  return 1   # win9x, or nt/2k/xp without FORCE 
+  fi # csih_is_nt2003 (also XP64) || csih_FORCE_PRIVILEGED_USER
+  return 1   # nt/2k/xp32 without FORCE 
 } # === End of csih_create_privileged_user() === #
 readonly -f csih_create_privileged_user
 
 # ======================================================================
 # Routine: csih_create_unprivileged_user
-#   On Windows NT and above, creates a new (unprivileged) user as specified
-#     by $1.
+#   Creates a new (unprivileged) user as specified by $1.
 #   Useful for running services that do not require elevated privileges,
 #     or running servers like sshd in "privilege separation" mode.
 #   
@@ -2713,11 +2909,8 @@ readonly -f csih_create_privileged_user
 #   Returns 1 on failure
 #
 # csih_auto_answer=no behavior
-#   if nt
-#     if already exists
-#       use it
-#     else
-#       do nothing, return 1
+#   if already exists
+#     use it
 #   else
 #     do nothing, return 1
 # ======================================================================
@@ -2733,68 +2926,62 @@ csih_create_unprivileged_user()
 
   _csih_setup
 
-  if csih_is_nt
+  /usr/bin/grep -q "^${unpriv_user}:" "${SYSCONFDIR}/passwd" && unpriv_user_in_passwd=yes
+  csih_call_winsys32 net user "${unpriv_user}" >/dev/null 2>&1 && unpriv_user_in_sam=yes
+  if [ "${unpriv_user_in_passwd}" != "yes" ]
   then
-    grep -q "^${unpriv_user}:" "${SYSCONFDIR}/passwd" && unpriv_user_in_passwd=yes
-    net user "${unpriv_user}" >/dev/null 2>&1 && unpriv_user_in_sam=yes
-    if [ "${unpriv_user_in_passwd}" != "yes" ]
+    if [ "${unpriv_user_in_sam}" != "yes" ]
     then
-      if [ "${unpriv_user_in_sam}" != "yes" ]
+      csih_inform "Note that creating a new user requires that the current account have"
+      csih_inform "Administrator privileges.  Should this script attempt to create a"
+      # give auto-answer a chance to veto
+      if csih_request "new local account '${unpriv_user}'?"
       then
-        csih_inform "Note that creating a new user requires that the current account have"
-        csih_inform "Administrator privileges.  Should this script attempt to create a"
-        # give auto-answer a chance to veto
-        if csih_request "new local account '${unpriv_user}'?"
+        dos_var_empty=$(/usr/bin/cygpath -w ${LOCALSTATEDIR}/empty)
+        csih_call_winsys32 net user "${unpriv_user}" /add /fullname:"${unpriv_user} privsep" \
+          "/homedir:${dos_var_empty}" /active:no > /dev/null 2>&1 && unpriv_user_in_sam=yes
+        if [ "${unpriv_user_in_sam}" != "yes" ]
         then
-          dos_var_empty=$(cygpath -w ${LOCALSTATEDIR}/empty)
-          net user "${unpriv_user}" /add /fullname:"${unpriv_user} privsep" \
-            "/homedir:${dos_var_empty}" /active:no > /dev/null 2>&1 && unpriv_user_in_sam=yes
-          if [ "${unpriv_user_in_sam}" != "yes" ]
-          then
-            csih_warning "Creating the user '${unpriv_user}' failed!"
-          fi
+          csih_warning "Creating the user '${unpriv_user}' failed!"
         fi
-      fi
-      if [ "${unpriv_user_in_sam}" = "yes" ]
-      then
-        # user either already existed in local SAM, or we just created a new local
-        # user.  Therefore, mkpasswd -l is appropriate.  However, the user does not
-        # (yet) appear in /etc/passwd, so add it.
-        mkpasswd -l -u "${unpriv_user}" | sed -n -e "/^${unpriv_user}/s/bash\$/false/p" >>\
-          ${SYSCONFDIR}/passwd
-        # make sure the previous command succeeded
-        grep -q "^${unpriv_user}:" "${SYSCONFDIR}/passwd" && unpriv_user_in_passwd=yes
-        if [ "${unpriv_user_in_passwd}" != "yes" ]
-        then
-          csih_warning "Created new user '${unpriv_user}', but failed to add"
-          csih_warning "corresponding entry to /etc/passwd!"
-        fi
-      fi
-    else
-      if [ "${unpriv_user_in_sam}" != "yes" ]
-      then
-        # FIXME: Needs real domain awareness to not print spurious warnings
-        csih_warning "${unpriv_user} is in ${SYSCONFDIR}/passwd, but the"
-        csih_warning "local machine's SAM does not know about ${unpriv_user}."
-        csih_warning "Perhaps ${unpriv_user} is a pre-existing domain account."
-        csih_warning "Continuing, but check if this is ok."
       fi
     fi
-    # as long as the user is in /etc/passwd, return success
-    # if missing from SAM, we've already issued a diagnostic
-    # and are assuming the user is a valid domain account.
-    [ "x${unpriv_user_in_passwd}" = "xyes" ] && return 0
-    return 1
+    if [ "${unpriv_user_in_sam}" = "yes" ]
+    then
+      # user either already existed in local SAM, or we just created a new local
+      # user.  Therefore, mkpasswd -l is appropriate.  However, the user does not
+      # (yet) appear in /etc/passwd, so add it.
+      /usr/bin/mkpasswd -l -u "${unpriv_user}" | /usr/bin/sed -n -e "/^${unpriv_user}/s/bash\$/false/p" >>\
+        ${SYSCONFDIR}/passwd
+      # make sure the previous command succeeded
+      /usr/bin/grep -q "^${unpriv_user}:" "${SYSCONFDIR}/passwd" && unpriv_user_in_passwd=yes
+      if [ "${unpriv_user_in_passwd}" != "yes" ]
+      then
+        csih_warning "Created new user '${unpriv_user}', but failed to add"
+        csih_warning "corresponding entry to /etc/passwd!"
+      fi
+    fi
+  else
+    if [ "${unpriv_user_in_sam}" != "yes" ]
+    then
+      # FIXME: Needs real domain awareness to not print spurious warnings
+      csih_warning "${unpriv_user} is in ${SYSCONFDIR}/passwd, but the"
+      csih_warning "local machine's SAM does not know about ${unpriv_user}."
+      csih_warning "Perhaps ${unpriv_user} is a pre-existing domain account."
+      csih_warning "Continuing, but check if this is ok."
+    fi
   fi
-  return 1 # not nt
+  # as long as the user is in /etc/passwd, return success
+  # if missing from SAM, we've already issued a diagnostic
+  # and are assuming the user is a valid domain account.
+  [ "x${unpriv_user_in_passwd}" = "xyes" ] && return 0
+  return 1
 } # === End of csih_create_unprivileged_user() === #
 readonly -f csih_create_unprivileged_user
 
 
 # ======================================================================
 # Routine: csih_service_should_run_as [service_name]
-#   On Windows9x, returns ""
-#
 #   If [service_name] is specified, check to see if service_name is
 #     already installed.  If so, return that user (after verifying
 #     that it has the necessary privileges). If not installed, behave
@@ -2804,13 +2991,13 @@ readonly -f csih_create_unprivileged_user
 #
 #   Otherwise:
 #
-#     On Windows Server 2003 and above (including Windows Vista), or if
-#     csih_FORCE_PRIVILEGED_USER == "yes" for Windows NT and above:
+#     On 64bit Windows XP, Windows Server 2003 and above (including
+#     Windows Vista), or if csih_FORCE_PRIVILEGED_USER == "yes"
 #       returns the selected privileged account name, IF it exists (e.g.
 #       already existed, or was successfully created).  Otherwise,
 #       returns "SYSTEM".  Callers should check this and warn.
 #
-#     On Windows NT/2k/XP, if csih_FORCE_PRIVILEGED_USER != yes, then
+#     On Windows NT/2k/XP32, if csih_FORCE_PRIVILEGED_USER != yes, then
 #       if a privileged user already exists, return it
 #       else return "SYSTEM"
 #
@@ -2824,28 +3011,23 @@ csih_service_should_run_as()
   $_csih_trace
   local opt_servicename
 
-  if ! csih_is_nt
-  then
-    return
-  fi
-
   # caller specified a service, so first check to see if that service
   # is already installed, and if so, analyze that account.  (If not,
   # fall thru...)
   if [ -n "$1" ]
   then
     opt_servicename="$1"
-    if cygrunsrv -Q "${opt_servicename}" >/dev/null 2>&1
+    if /usr/bin/cygrunsrv -Q "${opt_servicename}" >/dev/null 2>&1
     then
-      username=$(cygrunsrv -V -Q ${opt_servicename} 2>&1 | sed -n -e '/^Account/s/^.* : //p')
+      username=$(/usr/bin/cygrunsrv -V -Q ${opt_servicename} 2>&1 | /usr/bin/sed -n -e '/^Account/s/^.* : //p')
       username="${username/\.\\/${COMPUTERNAME}\\}"
       if [ "${username}" = "LocalSystem" ]
       then
         username=SYSTEM
       else
-        username=$(fgrep "${username}" /etc/passwd | cut -d: -f 1)
+        username=$(/usr/bin/grep -F "${username}" /etc/passwd | /usr/bin/cut -d: -f 1)
       fi
-      if ( csih_is_nt2003 || [ csih_is_nt -a "x$csih_FORCE_PRIVILEGED_USER" = "xyes" ] )
+      if ( csih_is_nt2003 || [ "x$csih_FORCE_PRIVILEGED_USER" = "xyes" ] )
       then
         if [ -n "${username}" -a "${username}" != SYSTEM ]
         then
@@ -2878,11 +3060,12 @@ csih_service_should_run_as()
               "${opt_servicename} is installed under account 'SYSTEM', but that"  \
               "conflicts with privileged user requirement. ${opt_servicename}" \
               "must be installed under a special privileged account: either"  \
-              "because the OS is Windows2003 or above, or you requested -privileged." 1>&2
+              "because the OS is 64bit Windows XP, Windows Server 2003, or above," \
+              "or you requested -privileged." 1>&2
           fi
         fi    
       else
-        # not nt2003 nor (nt && csih_FORCE_PRIVILEGED_USER=yes)
+        # not nt2003|xp64 nor (nt && csih_FORCE_PRIVILEGED_USER=yes)
         # we don't care about properties of $username...
         if [ -z "${username}" ]
         then
@@ -2915,8 +3098,8 @@ csih_service_should_run_as()
       # it already existed before this script was launched
       echo "$csih_PRIVILEGED_USERNAME"
       return
-    elif egrep "^${csih_PRIVILEGED_USERNAME}:" /etc/passwd 1>/dev/null 2>&1 ||
-         net user "${csih_PRIVILEGED_USERNAME}" >/dev/null 2>&1
+    elif /usr/bin/grep -E "^${csih_PRIVILEGED_USERNAME}:" /etc/passwd 1>/dev/null 2>&1 ||
+         csih_call_winsys32 net user "${csih_PRIVILEGED_USERNAME}" >/dev/null 2>&1
     then
       # we probably just created it
       echo "$csih_PRIVILEGED_USERNAME"
@@ -2930,10 +3113,9 @@ csih_service_should_run_as()
     fi
   fi 
 
-  # not nt2003, and not (nt && csih_FORCE_PRIVILEGED=yes).
-  # however, we know csih_is_nt is true, because we bailed out very
-  # early if not.  Therefore, use fallback: if any privileged user
-  # exists, report that. Otherwise, report SYSTEM
+  # not nt2003|xp64, and csih_FORCE_PRIVILEGED != yes).
+  # Use fallback: if any privileged user exists, report that. Otherwise,
+  # report SYSTEM
   csih_privileged_accounts
   if [ -n "${_csih_preferred_preexisting_privileged_account}" ]
   then
@@ -2946,31 +3128,52 @@ readonly -f csih_service_should_run_as
 
 # ======================================================================
 # Routine: _csih_late_initialization_code
-# SETS GLOBAL VARIABLE: _csih_is_exactly_vista
-#                       _csih_is_exactly_server2008
-#                       _csih_is_exactly_windows7
-#                       _csih_is_exactly_server2008r2
+#   Initializes variables that require complex script support, such
+#   as csih_invoke_helper.
+#
+# SETS GLOBAL VARIABLE:
+#   _csih_script_dir
+#   _csih_exec_dir
+#   _csih_exactly_vista
+#   _csih_exactly_server2008
+#   _csih_exactly_windows7
+#   _csih_exactly_server2008r2
+#   _csih_exactly_windows8
+#   _csih_exactly_server2012
+#   _csih_win_product_name
 # ======================================================================
 _csih_late_initialization_code()
 {
   local rstatus
   local productName
+
+  # These two variables must be initialized before calling
+  # csih_invoke_helper
+  _csih_script_dir=$(_csih_get_script_dir)
+  _csih_exec_dir=$(_csih_get_exec_dir)
+
   productName=$(csih_invoke_helper winProductName)
   rstatus=$?
   if [ "$rstatus" -eq 0 ]
   then
-    if   echo "${productName}" | grep " Server 2008 R2 " >/dev/null 2>&1
+    if   echo "${productName}" | /usr/bin/grep " Server 2012 " >/dev/null 2>&1
     then
-        _csih_is_exactly_server2008r2=1
-    elif echo "${productName}" | grep " Windows 7 " >/dev/null 2>&1
+        _csih_exactly_server2012=1
+    elif echo "${productName}" | /usr/bin/grep " Windows 8 " >/dev/null 2>&1
     then
-        _csih_is_exactly_windows7=1
-    elif echo "${productName}" | grep " Server 2008 " >/dev/null 2>&1
+        _csih_exactly_windows8=1
+    elif   echo "${productName}" | /usr/bin/grep " Server 2008 R2 " >/dev/null 2>&1
     then
-        _csih_is_exactly_server2008=1
-    elif echo "${productName}" | grep " Vista " >/dev/null 2>&1
+        _csih_exactly_server2008r2=1
+    elif echo "${productName}" | /usr/bin/grep " Windows 7 " >/dev/null 2>&1
     then
-        _csih_is_exactly_vista=1
+        _csih_exactly_windows7=1
+    elif echo "${productName}" | /usr/bin/grep " Server 2008 " >/dev/null 2>&1
+    then
+        _csih_exactly_server2008=1
+    elif echo "${productName}" | /usr/bin/grep " Vista " >/dev/null 2>&1
+    then
+        _csih_exactly_vista=1
     fi
     _csih_win_product_name="${productName}";
   fi
@@ -2978,28 +3181,44 @@ _csih_late_initialization_code()
 readonly -f _csih_late_initialization_code
 
 
-
+# ======================================================================
+# Initial setup, default values, etc.  PART 3
+#
+# This part of the setup has to be deferred to the end of the csih
+# script, since we need many of the previously defined functions to
+# be available (such as csih_invoke_helper) before the variable values
+# can be obtained.  Most of this initialization is encapsulated in the
+# _csih_late_initialization_code() function.
+#
+# Finally, we ensure that this file is being used properly (that is,
+# sourced by another script rather than executed directly), and that
+# the current cygwin and Windows versions are supported.  csih requires
+# WinNT or above and cygwin-1.7.x or above.
+# ======================================================================
 _csih_late_initialization_code
-readonly _csih_is_exactly_vista _csih_is_exactly_server2008
-readonly _csih_is_exactly_server2008r2 _csih_is_exactly_windows7
+readonly _csih_script_dir _csih_exec_dir
+readonly _csih_exactly_vista _csih_exactly_server2008
+readonly _csih_exactly_server2008r2 _csih_exactly_windows7
+readonly _csih_exactly_server2012 _csih_exactly_windows8
 readonly _csih_win_product_name
+
 if [ "cygwin-service-installation-helper.sh" = "$csih_progname_base" ]
 then
   csih_error "$csih_progname_base should not be executed directly"
 fi
-if !  csih_is_nt
+if ! csih_is_nt
 then
   csih_error_multi \
-	"$csih_progname_base is using csih-$csih_VERSION." \
-	"csih-$csih_VERSION requires WinNT or above." \
-	"The current operating system is:" \
-	"$_csih_win_product_name."
+    "$csih_progname_base is using csih-$csih_VERSION." \
+    "csih-$csih_VERSION requires WinNT or above." \
+    "The current operating system is:" \
+    "$_csih_win_product_name."
 fi
 if ! csih_cygver_is_oneseven
 then
   csih_error_multi \
-	"$csih_progname_base is using csih-$csih_VERSION." \
-	"csih-$csih_VERSION requires cygwin-1.7.0 or above." \
-	"The current cygwin version is: $_csih_cygver"
+    "$csih_progname_base is using csih-$csih_VERSION." \
+    "csih-$csih_VERSION requires cygwin-1.7.0 or above." \
+    "The current cygwin version is: $_csih_cygver"
 fi
 
