@@ -1,8 +1,8 @@
 ; Basic variables
-!define PRODUCT_NAME "Mandriva OpenSSH Agent"
+!define PRODUCT_NAME "Siveo OpenSSH Agent"
 !define PRODUCT_VERSION "2.1.1"
-!define PRODUCT_PUBLISHER "Mandriva S.A."
-!define PRODUCT_WEB_SITE "http://www.mandriva.com"
+!define PRODUCT_PUBLISHER "Siveo"
+!define PRODUCT_WEB_SITE "http://www.siveo.org"
 !define PRODUCT_DIR_REGKEY "Software\Mandriva\OpenSSH"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
