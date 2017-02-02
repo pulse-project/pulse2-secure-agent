@@ -1,7 +1,5 @@
 #!/bin/bash
 #
-# cyglsa-config, Copyright 2006, 2010 Red Hat Inc.
-#
 #     This program is free software; you can redistribute it and/or modify
 #     it under the terms of the GNU General Public License as published by
 #     the Free Software Foundation; either version 2 of the License, or
@@ -39,7 +37,7 @@ request()
 }
 
 # Check if running under at least Windows 2000
-_nt_too_old=`uname | gawk -F- '{print ( $2 < 5.0 ) ? 1 : 0;}'`
+_nt_too_old=`uname | awk -F- '{print ( $2 < 5.0 ) ? 1 : 0;}'`
 if [ ${_nt_too_old} -eq 1 ]
 then
   echo "Cygwin LSA authentication not supported on Windows NT4 or older.  Exiting."
@@ -66,12 +64,10 @@ echo "Warning: Registering the Cygwin LSA authentication package requires"
 echo "administrator privileges!  You also have to reboot the machine to"
 echo "activate the change."
 echo
-#request "Are you sure you want to continue?" || exit 0
+request "Are you sure you want to continue?" || exit 0
 
 # The registry value which keeps the authentication packages.
-regtool_value='/HKEY_LOCAL_MACHINE/SYSTEM/CurrentControlSet/Control/Lsa/Authentication Packages'
-regkey='HKLM\SYSTEM\CurrentControlSet\Control\Lsa'
-regvalue='Authentication Packages'
+value='/HKEY_LOCAL_MACHINE/SYSTEM/CurrentControlSet/Control/Lsa/Authentication Packages'
 
 [ -f /bin/cyglsa -a ! -d /bin/cyglsa ] && rm -rf /bin/cyglsa
 if [ ! -d /bin/cyglsa ]
@@ -91,22 +87,12 @@ fi
 
 # Get old content, remove every trace of "cyglsa" from it and write the
 # content back to the registry with the new, correct path to the cyglsa DLL.
-old=`regtool get "${regtool_value}"`
-
-OLDIFS=${IFS}
-IFS=$'\n'
-
+old=`regtool get "${value}"`
 new=`for i in ${old}
 do
   echo $i | GREP_OPTIONS="" grep -v cyglsa
 done`
-
-IFS=${OLDIFS}
-
-# Cannot use regtool here. When upgrading from an old Cygwin,
-# regtool.exe will create buggy REG_MULTI_SZ registry entity !
-#if ! regtool set "${value}" ${new} "${bindir}\\cyglsa\\${dll}"
-if ! reg add "${regkey}" /v "${regvalue}" /t REG_MULTI_SZ /d "${new}\0${bindir}\\cyglsa\\${dll}" /f
+if ! regtool set "${value}" ${new} "${bindir}\\cyglsa\\${dll}"
 then
   echo "Setting the new registry value failed.  Exiting."
   exit 1
@@ -116,20 +102,20 @@ echo
 echo "Cygwin LSA authentication package registered."
 echo
 echo "Activating Cygwin's LSA authentication package requires to reboot."
-#if [ -x /bin/shutdown ]
-#then
-#  if request "Do you want to do this immediately?"
-#  then
-#    echo
-#    echo "Other users might still be working on this machine."
-#    echo
-#    if request "Are you sure?"
-#    then
-#      echo
-#      echo "Ok, will reboot in 30 seconds."
-#      echo
-#      echo "If you change your mind, call 'shutdown -a' within 30 seconds"
-#      shutdown -r 30
-#    fi
-#  fi
-#fi
+if [ -x /bin/shutdown ]
+then
+  if request "Do you want to do this immediately?"
+  then
+    echo
+    echo "Other users might still be working on this machine."
+    echo
+    if request "Are you sure?"
+    then
+      echo
+      echo "Ok, will reboot in 30 seconds."
+      echo
+      echo "If you change your mind, call 'shutdown -a' within 30 seconds"
+      shutdown -r 30
+    fi
+  fi
+fi

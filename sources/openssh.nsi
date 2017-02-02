@@ -1,9 +1,9 @@
 ; Basic variables
 !define PRODUCT_NAME "Siveo OpenSSH Agent"
-!define PRODUCT_VERSION "2.1.1"
+!define PRODUCT_VERSION "2.3.0"
 !define PRODUCT_PUBLISHER "Siveo"
 !define PRODUCT_WEB_SITE "http://www.siveo.org"
-!define PRODUCT_DIR_REGKEY "Software\Mandriva\OpenSSH"
+!define PRODUCT_DIR_REGKEY "Software\Siveo\OpenSSH"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
 
@@ -81,7 +81,7 @@ Var /GLOBAL PREVIOUSINSTDIR
 
 Name "${PRODUCT_NAME} (${PRODUCT_VERSION})"
 OutFile "pulse2-secure-agent-${PRODUCT_VERSION}.exe"
-InstallDir "$PROGRAMFILES\Mandriva\OpenSSH"
+InstallDir "$PROGRAMFILES\Siveo\OpenSSH"
 InstallDirRegKey HKLM "${PRODUCT_DIR_REGKEY}" ""
 ShowInstDetails show
 ShowUnInstDetails show
@@ -125,7 +125,7 @@ Function .onInit
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ; ReadRegStr will set the Errors flag if the key doesn't exist
   ClearErrors
-  ReadRegStr $0 HKLM "Software\Mandriva\OpenSSH" "CurrentVersion"
+  ReadRegStr $0 HKLM "Software\Siveo\OpenSSH" "CurrentVersion"
   ${If} ${Errors}
     ; The key doesn't exists, it means that previous version was older
     ; than 1.1.0 or no agent is currently installed
@@ -137,7 +137,7 @@ Function .onInit
   ${EndIf}
   ; ReadRegStr will set the Errors flag if the key doesn't exist
   ClearErrors
-  ReadRegStr $0 HKLM "Software\Mandriva\OpenSSH" "InstallPath"
+  ReadRegStr $0 HKLM "Software\Siveo\OpenSSH" "InstallPath"
   ${If} ${Errors}
     ; The key doesn't exists, it means that previous version was older
     ; than 1.2.X
@@ -175,7 +175,7 @@ Function .onInit
         ${If} ${Silent}
           Abort
         ${Else}
-          MessageBox MB_OK|MB_ICONSTOP 'The installer found that this version of Mandriva Pulse2 Secure Agent (OpenSSH included) is already installed. Either remove it first, or run me using "/FORCE"'
+          MessageBox MB_OK|MB_ICONSTOP 'The installer found that this version of Siveo Pulse2 Secure Agent (OpenSSH included) is already installed. Either remove it first, or run me using "/FORCE"'
           Abort
         ${EndIf}
       ${EndIf}
@@ -216,6 +216,12 @@ SectionEnd
 Section "Core" Core
   SectionIn RO
 
+  SetOutPath "$INSTDIR\usr\bin"
+  SetOverwrite on
+  !insertmacro ForceCopyOnReboot data\cygwin\usr\bin\getent.exe "$OUTDIR\getent.exe" "$OUTDIR"
+  !insertmacro ForceCopyOnReboot data\cygwin\usr\bin\getent.exe "$OUTDIR\getent" "$OUTDIR"
+
+
   SetOutPath "$INSTDIR\bin"
   SetOverwrite on
 
@@ -232,7 +238,7 @@ Section "Core" Core
   !insertmacro ForceCopyOnReboot data\cygwin\bin\cygncursesw-10.dll "$OUTDIR\cygncursesw-10.dll" "$OUTDIR"
   !insertmacro ForceCopyOnReboot data\cygwin\bin\cygmpfr-4.dll "$OUTDIR\cygmpfr-4.dll" "$OUTDIR"
   !insertmacro ForceCopyOnReboot data\cygwin\bin\cygmagic-1.dll "$OUTDIR\cygmagic-1.dll" "$OUTDIR"
-  !insertmacro ForceCopyOnReboot data\cygwin\bin\cygkrb5-26.dll "$OUTDIR\cygkrb5-26.dll" "$OUTDIR"
+  !insertmacro ForceCopyOnReboot data\cygwin\bin\cygkrb5-3.dll "$OUTDIR\cygkrb5-3.dll" "$OUTDIR"
   !insertmacro ForceCopyOnReboot data\cygwin\bin\cygkafs-0.dll "$OUTDIR\cygkafs-0.dll" "$OUTDIR"
   !insertmacro ForceCopyOnReboot data\cygwin\bin\cygidn-11.dll "$OUTDIR\cygidn-11.dll" "$OUTDIR"
   !insertmacro ForceCopyOnReboot data\cygwin\bin\cyghx509-5.dll "$OUTDIR\cyghx509-5.dll" "$OUTDIR"
@@ -240,7 +246,7 @@ Section "Core" Core
   !insertmacro ForceCopyOnReboot data\cygwin\bin\cygheimbase-1.dll "$OUTDIR\cygheimbase-1.dll" "$OUTDIR"
   !insertmacro ForceCopyOnReboot data\cygwin\bin\cyggssapi-3.dll "$OUTDIR\cyggssapi-3.dll" "$OUTDIR"
   !insertmacro ForceCopyOnReboot data\cygwin\bin\cyggpg-error-0.dll "$OUTDIR\cyggpg-error-0.dll" "$OUTDIR"
-  !insertmacro ForceCopyOnReboot data\cygwin\bin\cyggnutls-26.dll "$OUTDIR\cyggnutls-26.dll" "$OUTDIR"
+  !insertmacro ForceCopyOnReboot data\cygwin\bin\cyggnutls-28.dll "$OUTDIR\cyggnutls-28.dll" "$OUTDIR"
   !insertmacro ForceCopyOnReboot data\cygwin\bin\cygasn1-8.dll "$OUTDIR\cygasn1-8.dll" "$OUTDIR"
   !insertmacro ForceCopyOnReboot data\cygwin\bin\cyggmp-10.dll "$OUTDIR\cyggmp-10.dll" "$OUTDIR"
   !insertmacro ForceCopyOnReboot data\cygwin\bin\cygedit-0.dll "$OUTDIR\cygedit-0.dll" "$OUTDIR"
@@ -424,6 +430,11 @@ Section "Core" Core
   SetOverwrite on
   File data\cygwin\etc\postinstall\000-cygwin-post-install.sh.done
 
+  SetOutPath "$INSTDIR\usr\bin"
+  SetOverwrite on
+  file data\cygwin\usr\bin\getent.exe
+
+
   SetOutPath $INSTDIR\var\log
   SetOverwrite on
   File data\cygwin\var\log\wtmp
@@ -505,7 +516,7 @@ Section "Core" Core
                 ; Port isn't open yet
                 ${Else}
                     ; Try to open the port
-                    SimpleFC::AddPort 22 "Mandriva Secure Agent (OpenSSH)" 6 0 2 "" 1
+                    SimpleFC::AddPort 22 "Siveo Secure Agent (OpenSSH)" 6 0 2 "" 1
                     Pop $0
                     ${If} $1 == 1
                         DetailPrint "WindowsFirewall: Port 22/TCP couldn't be opened."
@@ -626,8 +637,8 @@ Section -Post
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "Publisher" "${PRODUCT_PUBLISHER}"
   ; Write a CurrentVersion variable
   ; This must be done after installation, otherwise it would overwrite previous version number
-  WriteRegStr HKLM "Software\Mandriva\OpenSSH" "CurrentVersion" "${PRODUCT_VERSION}"
-  WriteRegStr HKLM "Software\Mandriva\OpenSSH" "InstallPath" "$INSTDIR"
+  WriteRegStr HKLM "Software\Siveo\OpenSSH" "CurrentVersion" "${PRODUCT_VERSION}"
+  WriteRegStr HKLM "Software\Siveo\OpenSSH" "InstallPath" "$INSTDIR"
 SectionEnd
 
 ; Section descriptions
