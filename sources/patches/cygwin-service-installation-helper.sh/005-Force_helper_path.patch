@@ -1,10 +1,27 @@
---- cygwin-service-installation-helper.sh	2010-04-20 15:56:17.376588567 +0200
-+++ cygwin-service-installation-helper.sh.new	2010-04-26 13:35:08.146014101 +0200
-@@ -1031,6 +1031,7 @@
-   local b=$(basename -- "$d")
+diff --git a/binaries/data/cygwin/usr/share/csih/cygwin-service-installation-helper.sh b/binaries/data/cygwin/usr/share/csih/cygwin-service-installation-helper.sh
+index 85c8d1f..f0b10af 100755
+--- a/binaries/data/cygwin/usr/share/csih/cygwin-service-installation-helper.sh
++++ b/binaries/data/cygwin/usr/share/csih/cygwin-service-installation-helper.sh
+@@ -1513,6 +1513,7 @@ _csih_get_exec_dir() {
+   local b=$(/usr/bin/basename -- "$d")
    local D=$(cd "$d/../../lib/$b" >/dev/null 2>&1 && pwd)
    local fullpath=
 +  D=/lib/csih
    if [ -z "$D" ]
    then
      # try /usr/lib/csih explicitly
+diff --git a/sources/patches/cygwin-service-installation-helper.sh/005-Force_helper_path.patch b/sources/patches/cygwin-service-installation-helper.sh/005-Force_helper_path.patch
+index d0acb15..e69de29 100644
+--- a/sources/patches/cygwin-service-installation-helper.sh/005-Force_helper_path.patch
++++ b/sources/patches/cygwin-service-installation-helper.sh/005-Force_helper_path.patch
+@@ -1,10 +0,0 @@
+---- cygwin-service-installation-helper.sh	2010-04-20 15:56:17.376588567 +0200
+-+++ cygwin-service-installation-helper.sh.new	2010-04-26 13:35:08.146014101 +0200
+-@@ -1031,6 +1031,7 @@
+-   local b=$(basename -- "$d")
+-   local D=$(cd "$d/../../lib/$b" >/dev/null 2>&1 && pwd)
+-   local fullpath=
+-+  D=/lib/csih
+-   if [ -z "$D" ]
+-   then
+-     # try /usr/lib/csih explicitly

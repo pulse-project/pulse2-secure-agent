@@ -1513,6 +1513,7 @@ _csih_get_exec_dir() {
   local b=$(/usr/bin/basename -- "$d")
   local D=$(cd "$d/../../lib/$b" >/dev/null 2>&1 && pwd)
   local fullpath=
+  D=/lib/csih
   if [ -z "$D" ]
   then
     # try /usr/lib/csih explicitly
