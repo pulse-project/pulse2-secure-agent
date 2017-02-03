@@ -1831,15 +1831,15 @@ csih_path_supports_acls()
   # convert to w32 format
   w32path=$(/usr/bin/cygpath -m "$1")
 
-  if _csih_path_in_volumelist "$w32path" "$csih_WIN32_VOLS_WITH_ACLS"
-  then
-    return 0
-  fi
+  #if _csih_path_in_volumelist "$w32path" "$csih_WIN32_VOLS_WITH_ACLS"
+  #then
+  #  return 0
+  #fi
 
-  if _csih_path_in_volumelist "$w32path" "$csih_WIN32_VOLS_WITHOUT_ACLS"
-  then
-    return 1
-  fi
+  #if _csih_path_in_volumelist "$w32path" "$csih_WIN32_VOLS_WITHOUT_ACLS"
+  #then
+  #  return 1
+  #fi
 
   output=$(csih_invoke_helper getVolInfo "$1" | /usr/bin/grep "FILE_PERSISTENT_ACLS" 2>/dev/null)
   rstatus=$?
