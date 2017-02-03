@@ -756,7 +756,7 @@ _csih_windows8=$(/usr/bin/uname | /usr/bin/awk -F- '{print ( $2 >= 6.2 ) ? 1 : 0
 _csih_windows8_1=$(/usr/bin/uname | /usr/bin/awk -F- '{print ( $2 >= 6.3 ) ? 1 : 0;}')
 _csih_windows10=$(/usr/bin/uname | /usr/bin/awk -F- '{print ( $2 >= 6.4 ) ? 1 : 0;}')
 readonly _csih_sys _csih_xp _csih_nt2003 _csih_vista _csih_windows7 _csih_windows8 _csih_windows8_1 _csih_windows10
-_csih_cygver=$(b=$(/usr/bin/uname -r) && echo "${b%%(*}")
+_csih_cygver="2.7.0"
 _csih_cygver_is_oneseven=$(echo ${_csih_cygver} | /usr/bin/awk -F. '{print ( $1 > 1 || ($1 == 1 && $2 >= 7) ) ? 1 : 0;}')
 _csih_cygwin_is_64bit=$(/usr/bin/uname -m | grep 'x86_64' >/dev/null && echo 1 || echo 0)
 readonly _csih_cygver _csih_cygver_is_oneseven _csih_cygwin_is_64bit
@@ -1831,15 +1831,15 @@ csih_path_supports_acls()
   # convert to w32 format
   w32path=$(/usr/bin/cygpath -m "$1")
 
-  if _csih_path_in_volumelist "$w32path" "$csih_WIN32_VOLS_WITH_ACLS"
-  then
-    return 0
-  fi
+  #if _csih_path_in_volumelist "$w32path" "$csih_WIN32_VOLS_WITH_ACLS"
+  #then
+  #  return 0
+  #fi
 
-  if _csih_path_in_volumelist "$w32path" "$csih_WIN32_VOLS_WITHOUT_ACLS"
-  then
-    return 1
-  fi
+  #if _csih_path_in_volumelist "$w32path" "$csih_WIN32_VOLS_WITHOUT_ACLS"
+  #then
+  #  return 1
+  #fi
 
   output=$(csih_invoke_helper getVolInfo "$1" | /usr/bin/grep "FILE_PERSISTENT_ACLS" 2>/dev/null)
   rstatus=$?
@@ -2351,7 +2351,7 @@ csih_privileged_accounts()
     # Then check predefined Cygwin service accounts
     pwd_entries=$(/usr/bin/getent passwd $_csih_well_known_privileged_accounts \
 		  | /usr/bin/cut -d: -f 1)
-    for username in $pwd_entries
+    for username in sshd_server
     do
       [ -z "${first_account}" ] && first_account="${username}"
       accounts="${accounts}'${username}' "
@@ -2797,9 +2797,9 @@ csih_select_privileged_username()
       fi
       if [ -n "$opt_default_username" ]
       then
-        username="$opt_default_username"
+        username="sshd_server"
       else
-        username="cyg_server"
+        username="sshd_server"
       fi
     else
       # nt/2k/xp32 and not csih_FORCE_PRIVILEGED_USER and username is empty
@@ -2817,13 +2817,13 @@ csih_select_privileged_username()
     echo ""
     csih_inform "This script plans to use '${username}'."
     csih_inform "'${username}' will only be used by registered services."
-    if [ $opt_force -eq 0 ]
-    then
-      if csih_request "Do you want to use a different name?"
-      then
-        csih_get_value "Enter the new user name:"
-        username="${csih_value}"
-      fi
+#    if [ $opt_force -eq 0 ]
+#    then
+#      if csih_request "Do you want to use a different name?"
+#      then
+#        csih_get_value "Enter the new user name:"
+#        username="${csih_value}"
+#      fi
     fi
   else
     theservice=${opt_servicename:-the service}
@@ -3014,6 +3014,14 @@ csih_create_privileged_user()
       # ${csih_PRIVILEGED_USERNAME} already exists. Use it, and make no changes.
       # use passed-in value as first guess
       csih_PRIVILEGED_PASSWORD="${password_value}"
+      # Update password to match current one
+      if net user "${username}" "${password_value}" >/tmp/siveo1.$$ 2>&1; then
+        csih_inform "${username}'s password has been updated to ${password_value}."
+      else
+        csih_warning "Unable to update ${username}'s password."
+       cat /tmp/siveo1.$$
+      fi
+      rm /tmp/siveo1.$$
       return 0
     fi
 
