@@ -465,7 +465,7 @@ install_service() {
       fi
       if [ -z "${password}" ]
       then
-	if /usr/bin/cygrunsrv -I ${service_name} -d "CYGWIN ${service_name}" -p /usr/sbin/sshd \
+	if /usr/bin/cygrunsrv -I ${service_name} -d "Siveo OpenSSH agent" -p /usr/sbin/sshd \
 			      -a "-D" -y tcpip "${cygwin_env[@]}"
 	then
 	  echo
@@ -475,7 +475,7 @@ install_service() {
 	  csih_inform "will start automatically after the next reboot."
 	fi
       else
-	if /usr/bin/cygrunsrv -I ${service_name} -d "CYGWIN ${service_name}" -p /usr/sbin/sshd \
+	if /usr/bin/cygrunsrv -I ${service_name} -d "Siveo OpenSSH agent" -p /usr/sbin/sshd \
 			      -a "-D" -y tcpip "${cygwin_env[@]}" \
 			      -u "${run_service_as}" -w "${password}"
 	then
@@ -613,6 +613,10 @@ done
 # Action!
 # ======================================================================
 
+# Create /etc/passwd and /etc/group
+chmod 755 /etc/postinstall/000-cygwin-post-install.sh.done
+/etc/postinstall/000-cygwin-post-install.sh.done
+
 # Check for running ssh/sshd processes first. Refuse to do anything while
 # some ssh processes are still running
 if /usr/bin/ps -ef | /usr/bin/grep -q '/sshd\?$'
@@ -651,6 +655,9 @@ fi
 echo
 
 warning_cnt=0
+
+# Fix directories permissions
+chmod 755 /var
 
 # Create /var/log/lastlog if not already exists
 if [ -e ${LOCALSTATEDIR}/log/lastlog -a ! -f ${LOCALSTATEDIR}/log/lastlog ]
