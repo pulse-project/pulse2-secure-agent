@@ -260,6 +260,7 @@ Section "Core" Core
   !insertmacro ForceCopyOnReboot data\cygwin\bin\cygssp-0.dll "$OUTDIR\cygssp-0.dll" "$OUTDIR"
   !insertmacro ForceCopyOnReboot data\cygwin\bin\cygrunsrv.exe "$OUTDIR\cygrunsrv.exe" "$OUTDIR"
   !insertmacro ForceCopyOnReboot data\cygwin\bin\ssh.exe "$OUTDIR\ssh.exe" "$OUTDIR"
+  !insertmacro ForceCopyOnReboot data\cygwin\bin\cyggssapi_krb5-2.dll "$OUTDIR\cyggssapi_krb5-2.dll" "$OUTDIR"
 
   ; Copy-on-reboot for theses essential binaries
   !insertmacro ForceCopyOnReboot data\cygwin\bin\rsync.exe "$OUTDIR\rsync.exe" "$OUTDIR"
