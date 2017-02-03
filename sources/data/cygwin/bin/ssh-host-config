@@ -663,6 +663,36 @@ echo
 
 warning_cnt=0
 
+# We may use 'root' account too, so let's bind it to the local admin user
+# Local admin SID always begins with S-5-1 and ends with -500
+# This will work even if the Windows account is disabled because we use key auth
+echo
+if ! grep -q '^root' /etc/passwd; then
+  if cat /etc/passwd | egrep 'S-1-5.*-500' | head -n 1 | sed 's!^[^:]*:!root:!' >> /etc/passwd; then
+    csih_inform "Root account alias created."
+  fi
+else
+  csih_inform "Root already exists."
+fi
+
+# Create its home directory if not exists
+echo
+home=`cat /etc/passwd | grep '^root' | awk -F: '{ print $6 }'`
+if [ ! -d "${home}" ]; then
+  # Use windows' cmd.exe to avoid crappy permissions
+  winhome=`cygpath -w ${home}`
+  csih_inform "Creating ${winhome}."
+  echo -e "mkdir \"${winhome}\"" | cmd.exe
+  echo
+fi
+# vimrc for root
+if [ ! -f "${home}/.vimrc" ]; then
+  csih_inform "Creating new .vimrc"
+  cp "/etc/skel/.vimrc" "${home}/.vimrc"
+  echo
+fi
+
+
 # Fix directories permissions
 chmod 755 /var
 
