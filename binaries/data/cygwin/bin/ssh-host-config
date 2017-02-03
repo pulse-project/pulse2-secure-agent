@@ -811,4 +811,11 @@ else
 
 fi
 
+echo
+if cygrunsrv -S sshd; then
+  csih_inform "Siveo OpenSSH agent started."
+else
+  csih_error "Siveo OpenSSH agent could not be started."
+fi
+
 exit $warning_cnt

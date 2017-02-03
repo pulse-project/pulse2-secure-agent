@@ -1,14 +1,35 @@
---- bin/ssh-host-config	2013-10-25 12:34:35.977851841 +0200
-+++ /tmp/ssh-host-config.new	2013-10-25 12:35:15.368404999 +0200
-@@ -855,4 +855,11 @@
+diff --git a/binaries/data/cygwin/bin/ssh-host-config b/binaries/data/cygwin/bin/ssh-host-config
+index 6730402..8043148 100755
+--- a/binaries/data/cygwin/bin/ssh-host-config
++++ b/binaries/data/cygwin/bin/ssh-host-config
+@@ -811,4 +811,11 @@ else
  
  fi
  
 +echo
 +if cygrunsrv -S sshd; then
-+  csih_inform "Mandriva OpenSSH agent started."
++  csih_inform "Siveo OpenSSH agent started."
 +else
-+  csih_error "Mandriva OpenSSH agent could not be started."
++  csih_error "Siveo OpenSSH agent could not be started."
 +fi
 +
  exit $warning_cnt
+diff --git a/sources/patches/ssh-host-config/007-Start_service.patch b/sources/patches/ssh-host-config/007-Start_service.patch
+index 9bff570..e69de29 100644
+--- a/sources/patches/ssh-host-config/007-Start_service.patch
++++ b/sources/patches/ssh-host-config/007-Start_service.patch
+@@ -1,14 +0,0 @@
+---- bin/ssh-host-config	2013-10-25 12:34:35.977851841 +0200
+-+++ /tmp/ssh-host-config.new	2013-10-25 12:35:15.368404999 +0200
+-@@ -855,4 +855,11 @@
+- 
+- fi
+- 
+-+echo
+-+if cygrunsrv -S sshd; then
+-+  csih_inform "Mandriva OpenSSH agent started."
+-+else
+-+  csih_error "Mandriva OpenSSH agent could not be started."
+-+fi
+-+
+- exit $warning_cnt
