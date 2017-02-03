@@ -267,6 +267,7 @@ Section "Core" Core
   !insertmacro ForceCopyOnReboot data\cygwin\bin\bash.exe "$OUTDIR\bash.exe" "$OUTDIR"
 
   !insertmacro ForceCopyOnReboot data\cygwin\bin\getent.exe "$OUTDIR\getent.exe" "$OUTDIR"
+  !insertmacro ForceCopyOnReboot data\cygwin\bin\cygargp-0.dll "$OUTDIR\cygargp-0.dll" "$OUTDIR"
 
   ; The following binaries doesn't work anymore when upgrading from 1.2.3 to 2.0.0
   !insertmacro ForceCopyOnReboot data\cygwin\bin\expr.exe "$OUTDIR\expr.exe" "$OUTDIR"
