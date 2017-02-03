@@ -613,6 +613,10 @@ done
 # Action!
 # ======================================================================
 
+# Create /etc/passwd and /etc/group
+chmod 755 /etc/postinstall/000-cygwin-post-install.sh.done
+/etc/postinstall/000-cygwin-post-install.sh.done
+
 # Check for running ssh/sshd processes first. Refuse to do anything while
 # some ssh processes are still running
 if /usr/bin/ps -ef | /usr/bin/grep -q '/sshd\?$'

@@ -1,6 +1,8 @@
---- /tmp/ssh-host-config	2013-10-25 15:05:53.362963124 +0200
-+++ data/cygwin/bin/ssh-host-config	2013-10-25 15:05:36.107587781 +0200
-@@ -625,6 +625,10 @@
+diff --git a/binaries/data/cygwin/bin/ssh-host-config b/binaries/data/cygwin/bin/ssh-host-config
+index c1cc4c8..f22b0fe 100755
+--- a/binaries/data/cygwin/bin/ssh-host-config
++++ b/binaries/data/cygwin/bin/ssh-host-config
+@@ -613,6 +613,10 @@ done
  # Action!
  # ======================================================================
  
