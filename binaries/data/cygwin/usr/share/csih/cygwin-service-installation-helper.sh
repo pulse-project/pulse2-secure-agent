@@ -756,7 +756,7 @@ _csih_windows8=$(/usr/bin/uname | /usr/bin/awk -F- '{print ( $2 >= 6.2 ) ? 1 : 0
 _csih_windows8_1=$(/usr/bin/uname | /usr/bin/awk -F- '{print ( $2 >= 6.3 ) ? 1 : 0;}')
 _csih_windows10=$(/usr/bin/uname | /usr/bin/awk -F- '{print ( $2 >= 6.4 ) ? 1 : 0;}')
 readonly _csih_sys _csih_xp _csih_nt2003 _csih_vista _csih_windows7 _csih_windows8 _csih_windows8_1 _csih_windows10
-_csih_cygver=$(b=$(/usr/bin/uname -r) && echo "${b%%(*}")
+_csih_cygver="2.7.0"
 _csih_cygver_is_oneseven=$(echo ${_csih_cygver} | /usr/bin/awk -F. '{print ( $1 > 1 || ($1 == 1 && $2 >= 7) ) ? 1 : 0;}')
 _csih_cygwin_is_64bit=$(/usr/bin/uname -m | grep 'x86_64' >/dev/null && echo 1 || echo 0)
 readonly _csih_cygver _csih_cygver_is_oneseven _csih_cygwin_is_64bit

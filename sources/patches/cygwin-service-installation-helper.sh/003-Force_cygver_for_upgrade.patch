@@ -1,11 +1,13 @@
---- ./usr/share/csih/cygwin-service-installation-helper.sh	2013-10-25 12:16:02.766764741 +0200
-+++ /tmp/cygwin-service-installation-helper.sh.new	2013-10-25 12:17:40.015188195 +0200
-@@ -701,7 +701,7 @@
-     _csih_windows8=$(/usr/bin/uname | /usr/bin/awk -F- '{print ( $2 >= 6.2 ) ? 1 : 0;}')
- fi
- readonly _csih_sys _csih_nt _csih_2k _csih_xp _csih_nt2003 _csih_vista _csih_windows7 _csih_windows8
+diff --git a/binaries/data/cygwin/usr/share/csih/cygwin-service-installation-helper.sh b/binaries/data/cygwin/usr/share/csih/cygwin-service-installation-helper.sh
+index b3208ed..66cd3e9 100755
+--- a/binaries/data/cygwin/usr/share/csih/cygwin-service-installation-helper.sh
++++ b/binaries/data/cygwin/usr/share/csih/cygwin-service-installation-helper.sh
+@@ -756,7 +756,7 @@ _csih_windows8=$(/usr/bin/uname | /usr/bin/awk -F- '{print ( $2 >= 6.2 ) ? 1 : 0
+ _csih_windows8_1=$(/usr/bin/uname | /usr/bin/awk -F- '{print ( $2 >= 6.3 ) ? 1 : 0;}')
+ _csih_windows10=$(/usr/bin/uname | /usr/bin/awk -F- '{print ( $2 >= 6.4 ) ? 1 : 0;}')
+ readonly _csih_sys _csih_xp _csih_nt2003 _csih_vista _csih_windows7 _csih_windows8 _csih_windows8_1 _csih_windows10
 -_csih_cygver=$(b=$(/usr/bin/uname -r) && echo "${b%%(*}")
-+_csih_cygver="1.7.0"
++_csih_cygver="2.7.0"
  _csih_cygver_is_oneseven=$(echo ${_csih_cygver} | /usr/bin/awk -F. '{print ( $1 > 1 || ($1 == 1 && $2 >= 7) ) ? 1 : 0;}')
  _csih_cygwin_is_64bit=$(/usr/bin/uname -m | grep 'x86_64' >/dev/null && echo 1 || echo 0)
  readonly _csih_cygver _csih_cygver_is_oneseven _csih_cygwin_is_64bit
