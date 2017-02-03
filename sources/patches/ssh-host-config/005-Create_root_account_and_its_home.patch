@@ -1,6 +1,8 @@
---- /tmp/ssh-host-config	2013-10-25 15:18:41.195150962 +0200
-+++ data/cygwin/bin/ssh-host-config	2013-10-25 15:19:01.594411664 +0200
-@@ -671,6 +671,35 @@
+diff --git a/binaries/data/cygwin/bin/ssh-host-config b/binaries/data/cygwin/bin/ssh-host-config
+index 88f8102..f925acb 100755
+--- a/binaries/data/cygwin/bin/ssh-host-config
++++ b/binaries/data/cygwin/bin/ssh-host-config
+@@ -663,6 +663,36 @@ echo
  
  warning_cnt=0
  
@@ -32,6 +34,7 @@
 +  cp "/etc/skel/.vimrc" "${home}/.vimrc"
 +  echo
 +fi
++
 +
  # Fix directories permissions
  chmod 755 /var
