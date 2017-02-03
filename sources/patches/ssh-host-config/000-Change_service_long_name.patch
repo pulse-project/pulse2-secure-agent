@@ -1,20 +1,22 @@
---- bin/ssh-host-config	2013-10-25 11:10:55.119021301 +0200
-+++ /tmp/ssh-host-config.new	2013-10-25 12:22:09.153292027 +0200
-@@ -479,7 +479,7 @@
+diff --git a/binaries/data/cygwin/bin/ssh-host-config b/binaries/data/cygwin/bin/ssh-host-config
+index d934d09..c1cc4c8 100755
+--- a/binaries/data/cygwin/bin/ssh-host-config
++++ b/binaries/data/cygwin/bin/ssh-host-config
+@@ -465,7 +465,7 @@ install_service() {
        fi
        if [ -z "${password}" ]
        then
--	if /usr/bin/cygrunsrv -I sshd -d "CYGWIN sshd" -p /usr/sbin/sshd \
-+	if /usr/bin/cygrunsrv -I sshd -d "Mandriva OpenSSH agent" -p /usr/sbin/sshd \
+-	if /usr/bin/cygrunsrv -I ${service_name} -d "CYGWIN ${service_name}" -p /usr/sbin/sshd \
++	if /usr/bin/cygrunsrv -I ${service_name} -d "Siveo OpenSSH agent" -p /usr/sbin/sshd \
  			      -a "-D" -y tcpip "${cygwin_env[@]}"
  	then
  	  echo
-@@ -489,7 +489,7 @@
+@@ -475,7 +475,7 @@ install_service() {
  	  csih_inform "will start automatically after the next reboot."
  	fi
        else
--	if /usr/bin/cygrunsrv -I sshd -d "CYGWIN sshd" -p /usr/sbin/sshd \
-+	if /usr/bin/cygrunsrv -I sshd -d "Mandriva OpenSSH agent" -p /usr/sbin/sshd \
+-	if /usr/bin/cygrunsrv -I ${service_name} -d "CYGWIN ${service_name}" -p /usr/sbin/sshd \
++	if /usr/bin/cygrunsrv -I ${service_name} -d "Siveo OpenSSH agent" -p /usr/sbin/sshd \
  			      -a "-D" -y tcpip "${cygwin_env[@]}" \
  			      -u "${run_service_as}" -w "${password}"
  	then
