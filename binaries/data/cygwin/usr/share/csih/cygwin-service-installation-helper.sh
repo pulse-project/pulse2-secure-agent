@@ -2824,7 +2824,7 @@ csih_select_privileged_username()
 #        csih_get_value "Enter the new user name:"
 #        username="${csih_value}"
 #      fi
-    fi
+#    fi
   else
     theservice=${opt_servicename:-the service}
     csih_inform "This script will assume that ${theservice} will run"
