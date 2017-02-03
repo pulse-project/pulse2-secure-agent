@@ -2817,13 +2817,13 @@ csih_select_privileged_username()
     echo ""
     csih_inform "This script plans to use '${username}'."
     csih_inform "'${username}' will only be used by registered services."
-    if [ $opt_force -eq 0 ]
-    then
-      if csih_request "Do you want to use a different name?"
-      then
-        csih_get_value "Enter the new user name:"
-        username="${csih_value}"
-      fi
+#    if [ $opt_force -eq 0 ]
+#    then
+#      if csih_request "Do you want to use a different name?"
+#      then
+#        csih_get_value "Enter the new user name:"
+#        username="${csih_value}"
+#      fi
     fi
   else
     theservice=${opt_servicename:-the service}

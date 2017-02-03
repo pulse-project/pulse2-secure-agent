@@ -1,25 +1,55 @@
---- ./usr/share/csih/cygwin-service-installation-helper.sh	2013-10-25 11:10:56.294978209 +0200
-+++ /tmp/cygwin-service-installation-helper.sh.new	2013-10-25 12:11:23.269046246 +0200
-@@ -2635,14 +2635,14 @@
+diff --git a/binaries/data/cygwin/usr/share/csih/cygwin-service-installation-helper.sh b/binaries/data/cygwin/usr/share/csih/cygwin-service-installation-helper.sh
+index 10ab4fb..24a911b 100755
+--- a/binaries/data/cygwin/usr/share/csih/cygwin-service-installation-helper.sh
++++ b/binaries/data/cygwin/usr/share/csih/cygwin-service-installation-helper.sh
+@@ -2817,13 +2817,13 @@ csih_select_privileged_username()
      echo ""
      csih_inform "This script plans to use '${username}'."
      csih_inform "'${username}' will only be used by registered services."
 -    if [ $opt_force -eq 0 ]
--    then 
+-    then
 -      if csih_request "Do you want to use a different name?"
 -      then
 -        csih_get_value "Enter the new user name:"
 -        username="${csih_value}"
 -      fi
--    fi
-+    #if [ $opt_force -eq 0 ]
-+    #then 
-+    #  if csih_request "Do you want to use a different name?"
-+    #  then
-+    #    csih_get_value "Enter the new user name:"
-+    #    username="${csih_value}"
-+    #  fi
-+    #fi
++#    if [ $opt_force -eq 0 ]
++#    then
++#      if csih_request "Do you want to use a different name?"
++#      then
++#        csih_get_value "Enter the new user name:"
++#        username="${csih_value}"
++#      fi
+     fi
    else
      theservice=${opt_servicename:-the service}
-     csih_inform "This script will assume that ${theservice} will run"
+diff --git a/sources/patches/cygwin-service-installation-helper.sh/000-Do_not_prompt_or_account_name.patch b/sources/patches/cygwin-service-installation-helper.sh/000-Do_not_prompt_or_account_name.patch
+index 080a8e2..e69de29 100644
+--- a/sources/patches/cygwin-service-installation-helper.sh/000-Do_not_prompt_or_account_name.patch
++++ b/sources/patches/cygwin-service-installation-helper.sh/000-Do_not_prompt_or_account_name.patch
+@@ -1,25 +0,0 @@
+---- ./usr/share/csih/cygwin-service-installation-helper.sh	2013-10-25 11:10:56.294978209 +0200
+-+++ /tmp/cygwin-service-installation-helper.sh.new	2013-10-25 12:11:23.269046246 +0200
+-@@ -2635,14 +2635,14 @@
+-     echo ""
+-     csih_inform "This script plans to use '${username}'."
+-     csih_inform "'${username}' will only be used by registered services."
+--    if [ $opt_force -eq 0 ]
+--    then 
+--      if csih_request "Do you want to use a different name?"
+--      then
+--        csih_get_value "Enter the new user name:"
+--        username="${csih_value}"
+--      fi
+--    fi
+-+    #if [ $opt_force -eq 0 ]
+-+    #then 
+-+    #  if csih_request "Do you want to use a different name?"
+-+    #  then
+-+    #    csih_get_value "Enter the new user name:"
+-+    #    username="${csih_value}"
+-+    #  fi
+-+    #fi
+-   else
+-     theservice=${opt_servicename:-the service}
+-     csih_inform "This script will assume that ${theservice} will run"
