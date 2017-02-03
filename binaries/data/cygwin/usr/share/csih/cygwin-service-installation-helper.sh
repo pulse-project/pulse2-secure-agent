@@ -2351,7 +2351,7 @@ csih_privileged_accounts()
     # Then check predefined Cygwin service accounts
     pwd_entries=$(/usr/bin/getent passwd $_csih_well_known_privileged_accounts \
 		  | /usr/bin/cut -d: -f 1)
-    for username in $pwd_entries
+    for username in sshd_server
     do
       [ -z "${first_account}" ] && first_account="${username}"
       accounts="${accounts}'${username}' "
@@ -2797,9 +2797,9 @@ csih_select_privileged_username()
       fi
       if [ -n "$opt_default_username" ]
       then
-        username="$opt_default_username"
+        username="sshd_server"
       else
-        username="cyg_server"
+        username="sshd_server"
       fi
     else
       # nt/2k/xp32 and not csih_FORCE_PRIVILEGED_USER and username is empty
