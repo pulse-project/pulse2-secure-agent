@@ -2,7 +2,7 @@
 !define PRODUCT_NAME "Siveo OpenSSH Agent"
 !define PRODUCT_VERSION "2.3.0"
 !define PRODUCT_PUBLISHER "Siveo"
-!define PRODUCT_WEB_SITE "http://www.siveo.org"
+!define PRODUCT_WEB_SITE "http://www.siveo.net"
 !define PRODUCT_DIR_REGKEY "Software\Siveo\OpenSSH"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
