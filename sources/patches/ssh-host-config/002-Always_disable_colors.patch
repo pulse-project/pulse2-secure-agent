@@ -1,10 +1,21 @@
---- ssh-host-config.orig	2009-03-02 14:53:21.693705261 +0100
-+++ ssh-host-config	2009-03-02 14:53:09.913701554 +0100
-@@ -384,6 +384,7 @@
-   csih_auto_answer="no"
+diff --git a/binaries/data/cygwin/bin/ssh-host-config b/binaries/data/cygwin/bin/ssh-host-config
+index 45aab1a..4971dd9 100755
+--- a/binaries/data/cygwin/bin/ssh-host-config
++++ b/binaries/data/cygwin/bin/ssh-host-config
+@@ -520,6 +520,7 @@ then
    csih_disable_color
+   opt_force=yes
  fi
-+csih_disable_color
++
+ if [ -n "${SSH_HOST_CONFIG_AUTO_ANSWER_NO}" ]
+ then
+   csih_auto_answer="no"
+@@ -527,6 +528,8 @@ then
+   opt_force=yes
+ fi
  
++csih_disable_color
++
  # ======================================================================
  # Parse options
+ # ======================================================================

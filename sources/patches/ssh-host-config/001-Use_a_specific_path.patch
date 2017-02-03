@@ -1,27 +1,46 @@
---- bin/ssh-host-config	2013-10-25 12:22:39.268184887 +0200
-+++ /tmp/ssh-host-config.new	2013-10-25 12:26:06.360573269 +0200
-@@ -479,8 +479,10 @@
+diff --git a/binaries/data/cygwin/bin/ssh-host-config b/binaries/data/cygwin/bin/ssh-host-config
+index 45aab1a..88f8102 100755
+--- a/binaries/data/cygwin/bin/ssh-host-config
++++ b/binaries/data/cygwin/bin/ssh-host-config
+@@ -465,8 +465,10 @@ install_service() {
        fi
        if [ -z "${password}" ]
        then
-+	# Compute PATH to avoid conflicting with another cygwin installation
- 	if /usr/bin/cygrunsrv -I sshd -d "Mandriva OpenSSH agent" -p /usr/sbin/sshd \
++        # Compute PATH to avoid conflicting with another cygwin installation
+ 	if /usr/bin/cygrunsrv -I ${service_name} -d "Siveo OpenSSH agent" -p /usr/sbin/sshd \
 -			      -a "-D" -y tcpip "${cygwin_env[@]}"
-+			      -a "-D" -y tcpip "${cygwin_env[@]}" \
-+			      -e PATH="/cygdrive/`echo ${WINDIR} | sed 'si:\\\i/i'`/system32:/cygdrive/`echo ${WINDIR} | sed 'si:\\\i/i'`:/cygdrive/`echo ${WINDIR} | sed 'si:\\\i/i'`/System32/Wbem:/cygdrive/`mount | grep '/usr/bin' | awk -F' on ' '{ print $1 }' | sed 'si:\\\i/ig' | sed 'si\\\i/ig'`"
++                              -a "-D" -y tcpip "${cygwin_env[@]}" \
++                              -e PATH="/cygdrive/`echo ${WINDIR} | sed 'si:\\\i/i'`/system32:/cygdrive/`echo ${WINDIR} | sed 'si:\\\i/i'`:/cygdrive/`echo ${WINDIR} | sed 'si:\\\i/i'`/System32/Wbem:/cygdrive/`mount | grep '/usr/bin' | awk -F' on ' '{ print $1 }' | sed 'si:\\\i/ig' | sed 'si\\\i/ig'`"
  	then
  	  echo
  	  csih_inform "The sshd service has been installed under the LocalSystem"
-@@ -489,9 +491,11 @@
+@@ -475,9 +477,11 @@ install_service() {
  	  csih_inform "will start automatically after the next reboot."
  	fi
        else
-+	# Compute PATH to avoid conflicting with another cygwin installation
- 	if /usr/bin/cygrunsrv -I sshd -d "Mandriva OpenSSH agent" -p /usr/sbin/sshd \
++        # Compute PATH to avoid conflicting with another cygwin installation
+ 	if /usr/bin/cygrunsrv -I ${service_name} -d "Siveo OpenSSH agent" -p /usr/sbin/sshd \
  			      -a "-D" -y tcpip "${cygwin_env[@]}" \
 -			      -u "${run_service_as}" -w "${password}"
-+			      -u "${run_service_as}" -w "${password}" \
-+			      -e PATH="/cygdrive/`echo ${WINDIR} | sed 'si:\\\i/i'`/system32:/cygdrive/`echo ${WINDIR} | sed 'si:\\\i/i'`:/cygdrive/`echo ${WINDIR} | sed 'si:\\\i/i'`/System32/Wbem:/cygdrive/`mount | grep '/usr/bin' | awk -F' on ' '{ print $1 }' | sed 'si:\\\i/ig' | sed 'si\\\i/ig'`"
++                              -u "${run_service_as}" -w "${password}" \
++                              -e PATH="/cygdrive/`echo ${WINDIR} | sed 'si:\\\i/i'`/system32:/cygdrive/`echo ${WINDIR} | sed 'si:\\\i/i'`:/cygdrive/`echo ${WINDIR} | sed 'si:\\\i/i'`/System32/Wbem:/cygdrive/`mount | grep '/usr/bin' | awk -F' on ' '{ print $1 }' | sed 'si:\\\i/ig' | sed 'si\\\i/ig'`"
  	then
  	  /usr/bin/editrights -u "${run_service_as}" -a SeServiceLogonRight
  	  echo
+@@ -520,6 +524,7 @@ then
+   csih_disable_color
+   opt_force=yes
+ fi
++
+ if [ -n "${SSH_HOST_CONFIG_AUTO_ANSWER_NO}" ]
+ then
+   csih_auto_answer="no"
+@@ -527,6 +532,8 @@ then
+   opt_force=yes
+ fi
+ 
++csih_disable_color
++
+ # ======================================================================
+ # Parse options
+ # ======================================================================
