@@ -3014,6 +3014,14 @@ csih_create_privileged_user()
       # ${csih_PRIVILEGED_USERNAME} already exists. Use it, and make no changes.
       # use passed-in value as first guess
       csih_PRIVILEGED_PASSWORD="${password_value}"
+      # Update password to match current one
+      if net user "${username}" "${password_value}" >/tmp/siveo1.$$ 2>&1; then
+        csih_inform "${username}'s password has been updated to ${password_value}."
+      else
+        csih_warning "Unable to update ${username}'s password."
+       cat /tmp/siveo1.$$
+      fi
+      rm /tmp/siveo1.$$
       return 0
     fi
 
