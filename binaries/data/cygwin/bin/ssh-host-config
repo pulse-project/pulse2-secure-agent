@@ -656,6 +656,9 @@ echo
 
 warning_cnt=0
 
+# Fix directories permissions
+chmod 755 /var
+
 # Create /var/log/lastlog if not already exists
 if [ -e ${LOCALSTATEDIR}/log/lastlog -a ! -f ${LOCALSTATEDIR}/log/lastlog ]
 then
