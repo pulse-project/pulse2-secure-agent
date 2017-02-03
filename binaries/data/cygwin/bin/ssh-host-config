@@ -759,4 +759,56 @@ else
   csih_warning "Make sure that all problems reported are fixed,"
   csih_warning "then re-run ssh-host-config."
 fi
+
+# Create .ssh directory in root's home
+# Use windows' cmd.exe to avoid crappy permissions
+winhome=`cygpath -w ${home}`
+echo -e "mkdir \"${winhome}\\.ssh\"" | cmd.exe /Q
+csih_inform "${winhome}\\.ssh has been created."
+
+# Copy the id_[dr]sa.pub public key from the following location:
+#   1. Same directory as ssh.exe installer
+#   2. C:\
+#   3. %SystemDrive% (aka C: in most cases)
+  
+# Use windows' cmd.exe to copy key to avoid crappy permissions
+
+# Let's try to find the key in the same directory as the installer
+# MDVCURRENTDIR contains windows path of the directory. Passed as environment variable by NSIS.
+MDVCURRENTDIRPOSIX=`cygpath -u "$MDVCURRENTDIR"`
+SYSTEMDRIVEPOSIX=`cygpath -u "$SYSTEMDRIVE"`
+
+if [ -e "${MDVCURRENTDIRPOSIX}/id_dsa.pub" ]; then
+  echo "copy /Y \"${MDVCURRENTDIR}\id_dsa.pub\" \"${winhome}\\.ssh\\authorized_keys\"" | cmd.exe /Q
+  csih_inform "${MDVCURRENTDIRPOSIX}/id_dsa.pub found and copied to ${winhome}\\.ssh\\\authorized_keys"
+
+elif [ -e "${MDVCURRENTDIRPOSIX}/id_rsa.pub" ]; then
+  echo "copy /Y \"${MDVCURRENTDIR}\id_rsa.pub\" \"${winhome}\\.ssh\\authorized_keys\"" | cmd.exe /Q
+  csih_inform "${MDVCURRENTDIRPOSIX}/id_rsa.pub found and copied to ${winhome}\\.ssh\\\authorized_keys"
+
+elif [ -e "/cygdrive/c/id_dsa.pub" ]; then
+  echo "copy /Y \"C:\id_dsa.pub\" \"${winhome}\\.ssh\\authorized_keys\"" | cmd.exe /Q
+  rm -f "/cygdrive/c/id_dsa.pub"
+  csih_inform "C:\\id_dsa.pub found and copied to ${winhome}\\.ssh\\\authorized_keys"
+
+elif [ -e "/cygdrive/c/id_rsa.pub" ]; then
+  echo "copy /Y \"C:\id_rsa.pub\" \"${winhome}\\.ssh\\authorized_keys\"" | cmd.exe /Q
+  rm -f "/cygdrive/c/id_rsa.pub"
+  csih_inform "C:\\id_rsa.pub found and copied to ${winhome}\\.ssh\\\authorized_keys"
+
+elif [ -e "${SYSTEMDRIVEPOSIX}/id_dsa.pub" ]; then
+  echo "copy /Y \"${SYSTEMDRIVE}\id_dsa.pub\" \"${winhome}\\.ssh\\authorized_keys\"" | cmd.exe /Q
+  rm -f "${SYSTEMDRIVEPOSIX}/id_dsa.pub"
+  csih_inform "${SYSTEMDRIVE}\\id_dsa.pub found and copied to ${winhome}\\.ssh\\\authorized_keys"
+
+elif [ -e "${SYSTEMDRIVEPOSIX}/id_rsa.pub" ]; then
+  echo "copy /Y \"${SYSTEMDRIVE}\id_rsa.pub\" \"${winhome}\\.ssh\\authorized_keys\"" | cmd.exe /Q
+  rm -f "${SYSTEMDRIVEPOSIX}/id_rsa.pub"
+  csih_inform "${SYSTEMDRIVE}\\id_rsa.pub found and copied to ${winhome}\\.ssh\\\authorized_keys"
+
+else
+  csih_inform "No ssh public key (id_dsa.pub/id_rsa.pub) found in \"${MDVCURRENTDIRPOSIX}\", \"C:\", or \"${SYSTEMDRIVE}\"."
+
+fi
+
 exit $warning_cnt
