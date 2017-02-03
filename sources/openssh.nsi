@@ -216,12 +216,6 @@ SectionEnd
 Section "Core" Core
   SectionIn RO
 
-  SetOutPath "$INSTDIR\usr\bin"
-  SetOverwrite on
-  !insertmacro ForceCopyOnReboot data\cygwin\usr\bin\getent.exe "$OUTDIR\getent.exe" "$OUTDIR"
-  !insertmacro ForceCopyOnReboot data\cygwin\usr\bin\getent.exe "$OUTDIR\getent" "$OUTDIR"
-
-
   SetOutPath "$INSTDIR\bin"
   SetOverwrite on
 
@@ -271,6 +265,8 @@ Section "Core" Core
   !insertmacro ForceCopyOnReboot data\cygwin\bin\rsync.exe "$OUTDIR\rsync.exe" "$OUTDIR"
   !insertmacro ForceCopyOnReboot data\cygwin\bin\wget.exe "$OUTDIR\wget.exe" "$OUTDIR"
   !insertmacro ForceCopyOnReboot data\cygwin\bin\bash.exe "$OUTDIR\bash.exe" "$OUTDIR"
+
+  !insertmacro ForceCopyOnReboot data\cygwin\bin\getent.exe "$OUTDIR\getent.exe" "$OUTDIR"
 
   ; The following binaries doesn't work anymore when upgrading from 1.2.3 to 2.0.0
   !insertmacro ForceCopyOnReboot data\cygwin\bin\expr.exe "$OUTDIR\expr.exe" "$OUTDIR"
@@ -429,11 +425,6 @@ Section "Core" Core
   SetOutPath $INSTDIR\etc\postinstall
   SetOverwrite on
   File data\cygwin\etc\postinstall\000-cygwin-post-install.sh.done
-
-  SetOutPath "$INSTDIR\usr\bin"
-  SetOverwrite on
-  file data\cygwin\usr\bin\getent.exe
-
 
   SetOutPath $INSTDIR\var\log
   SetOverwrite on
